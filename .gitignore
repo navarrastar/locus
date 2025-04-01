@@ -2,3 +2,5 @@ assets/
 odin
 odin.dSYM/
 .env
+.DS_Store
+.vscode/
