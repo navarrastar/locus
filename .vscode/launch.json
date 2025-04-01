@@ -1,0 +1,16 @@
+{
+    "version": "0.2.0",
+    "configurations": [
+        
+        {
+            "name": "Debug Locke",
+            "type": "lldb-dap",
+            "request": "launch",
+            "program": "${workspaceFolder}/odin",
+            "args": [],
+            "cwd": "${workspaceFolder}",
+            "preLaunchTask": "build-odin",
+            "internalConsoleOptions": "openOnSessionStart",
+        }
+    ]
+}

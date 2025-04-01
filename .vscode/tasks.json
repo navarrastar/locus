@@ -1,0 +1,16 @@
+{
+  "version": "2.0.0",
+  "tasks": [
+      {
+          "label": "build-odin",
+          "type": "shell",
+          "command": "odin build . -debug -define:ASSET_DIR=\"${workspaceFolder}/assets\" -collection:pkg=pkg",
+          "group": {
+              "kind": "build",
+              "isDefault": true
+          },
+          "presentation": {},
+          "problemMatcher": []
+      }
+  ]
+}
