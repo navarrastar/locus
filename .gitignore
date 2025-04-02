@@ -1,6 +1,6 @@
 assets/
-odin
-odin.dSYM/
+Locke
+Locke.dSYM/
 .env
 .DS_Store
 .vscode/

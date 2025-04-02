@@ -28,7 +28,6 @@ init :: proc() {
     w = World {
         entity_count = 0,
         entities  = make([dynamic]Entity, 0, 1024),
-
         transform = make([dynamic]c.Transform, 0, 1024),
         camera    = make([dynamic]c.Camera, 0, 1024),
         light     = make([dynamic]c.Light, 0, 1024),
