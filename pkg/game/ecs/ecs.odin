@@ -4,6 +4,7 @@ import "core:log"
 
 import c "pkg:game/ecs/component"
 import m "pkg:core/math"
+import "pkg:core/filesystem/gltf"
 
 eid :: u32
 
@@ -44,7 +45,15 @@ loop :: proc() {
 
 }
 
-spawn_entity :: proc(pos := m.Vec3{}, rot := m.Vec3{}, s := f32{}, name := string{}) -> (e: Entity) {
+spawn_from_model :: proc(model: gltf.Model) -> (entities: [dynamic]Entity) {
+    for node in model.nodes {
+        append(&entities, spawn(node.local_transform[3].xyz, node.local_transform[0].xyz, 1.0, node.name))
+    }
+    return entities
+}
+
+
+spawn :: proc(pos := m.Vec3{}, rot := m.Vec3{}, s := f32{}, name := string{}) -> (e: Entity) {
     e = Entity {
         name = name,
         id = w.entity_count,
