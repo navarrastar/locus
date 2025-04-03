@@ -6,7 +6,7 @@ import "base:runtime"
 import "pkg:core/window"
 
 init :: proc(ctx: ^runtime.Context) {
-    window.init(ctx)
+    window.init()
 }
 
 cleanup :: proc() {

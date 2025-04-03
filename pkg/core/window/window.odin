@@ -57,29 +57,32 @@ key_callback :: proc "c" (window: glfw.WindowHandle, key, scancode, action, mods
     event.trigger(input_event)
 }
 
-init :: proc(ctx: ^runtime.Context) -> rawptr {
-    global_context = ctx
+init :: proc() -> bool {
+    if !bool(glfw.Init()) {
+        log.warn("Failed to initialize GLFW")
+        return false
+    }
 
-    glfw.SetErrorCallback(error_callback)
+    glfw.WindowHint(glfw.CLIENT_API, glfw.NO_API)
 
-    if !glfw.Init() { panic("Failed to initialize GLFW") }
+    window_width = 800
+    window_height = 600
+    window = glfw.CreateWindow(window_width, window_height, "Vulkan Demo", nil, nil)
+    if window == nil {
+        log.warn("Failed to create GLFW window")
+        return false
+    }
 
-    window = glfw.CreateWindow(1280, 720, "Locke", nil, nil)
-    if window == nil { panic("Failed to create window") }
-
-    glfw.SetKeyCallback(window, key_callback)
+    // Set window callbacks
     glfw.SetFramebufferSizeCallback(window, framebuffer_size_callback)
-    
-    // Get initial window size
-    width, height := glfw.GetFramebufferSize(window)
-    window_width = width
-    window_height = height
 
-    return window
+    return true
 }
 
 cleanup :: proc() {
-    glfw.DestroyWindow(window)
+    if window != nil {
+        glfw.DestroyWindow(window)
+    }
     glfw.Terminate()
 }
 
@@ -87,8 +90,12 @@ poll_events :: proc() {
     glfw.PollEvents()
 }
 
-should_close :: proc() -> b32 {
-    return glfw.WindowShouldClose(window)
+should_close :: proc() -> bool {
+    return bool(glfw.WindowShouldClose(window))
+}
+
+vulkan_supported :: proc() -> bool {
+    return bool(glfw.VulkanSupported())
 }
 
 get_required_extensions :: proc() -> []cstring {
@@ -97,4 +104,8 @@ get_required_extensions :: proc() -> []cstring {
 
 get_window_size :: proc() -> (width, height: i32) {
     return window_width, window_height
+}
+
+get_window_handle :: proc() -> glfw.WindowHandle {
+    return window
 }

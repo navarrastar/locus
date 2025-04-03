@@ -21,7 +21,8 @@ World :: struct {
     entities: [dynamic]Entity,
     transform: [dynamic]c.Transform,
     camera: [dynamic]c.Camera,
-    light: [dynamic]c.Light
+    light: [dynamic]c.Light,
+    mesh: [dynamic]c.Mesh,
 }
 
 init :: proc() {
@@ -31,22 +32,49 @@ init :: proc() {
         transform = make([dynamic]c.Transform, 0, 1024),
         camera    = make([dynamic]c.Camera, 0, 1024),
         light     = make([dynamic]c.Light, 0, 1024),
+        mesh      = make([dynamic]c.Mesh, 0, 1024),
     }
 
 }
 
 cleanup :: proc() {
+    // Clean up any allocated resources
+    for mesh in w.mesh {
+        if mesh.material_indices != nil {
+            delete(mesh.material_indices)
+        }
+    }
     
-
+    delete(w.entities)
+    delete(w.transform)
+    delete(w.camera)
+    delete(w.light)
+    delete(w.mesh)
 }
 
 loop :: proc() {
-
+    // Main loop for ECS systems
 }
 
 spawn_from_model :: proc(model: gltf.Model) -> (entities: [dynamic]Entity) {
     for node in model.nodes {
-        append(&entities, spawn(node.local_transform[3].xyz, node.local_transform[0].xyz, 1.0, node.name))
+        e := spawn(node.local_transform[3].xyz, node.local_transform[0].xyz, 1.0, node.name)
+        append(&entities, e)
+        
+        // If the node has a mesh, add a mesh component
+        if node.mesh_index >= 0 {
+            material_indices := make([]int, len(model.meshes[node.mesh_index].primitives))
+            for i := 0; i < len(model.meshes[node.mesh_index].primitives); i += 1 {
+                material_indices[i] = model.meshes[node.mesh_index].primitives[i].material_index
+            }
+            
+            mesh_comp := c.Mesh{
+                mesh_index = node.mesh_index,
+                material_indices = material_indices,
+                visible = true,
+            }
+            add_component(e, mesh_comp)
+        }
     }
     return entities
 }
@@ -80,6 +108,8 @@ add_component :: proc(e: Entity, comp: c.Component) -> bool {
             add_component_camera(e, comp.(c.Camera))
         case c.Light:
             add_component_light(e, comp.(c.Light))
+        case c.Mesh:
+            add_component_mesh(e, comp.(c.Mesh))
         case:
             log.error("Unknown component type", comp)
             return false
@@ -102,4 +132,37 @@ add_component_camera :: proc(e: Entity, cam: c.Camera) {
 add_component_light :: proc(e: Entity, l: c.Light) {
     log.debug("Adding light to", e, "with value", l)
     append(&w.light, l)
+}
+
+@(private)
+add_component_mesh :: proc(e: Entity, m: c.Mesh) {
+    log.debug("Adding mesh to", e, "with mesh index", m.mesh_index)
+    append(&w.mesh, m)
+}
+
+// Get all entities that have a mesh component
+get_entities_with_mesh :: proc() -> []Entity {
+    entities := make([]Entity, len(w.mesh))
+    for i in 0..<len(w.mesh) {
+        if i < len(w.entities) {
+            entities[i] = w.entities[i]
+        }
+    }
+    return entities
+}
+
+// Get mesh component for an entity
+get_mesh_component :: proc(e: Entity) -> ^c.Mesh {
+    if int(e.id) < len(w.mesh) {
+        return &w.mesh[e.id]
+    }
+    return nil
+}
+
+// Get transform component for an entity
+get_transform_component :: proc(e: Entity) -> ^c.Transform {
+    if int(e.id) < len(w.transform) {
+        return &w.transform[e.id]
+    }
+    return nil
 }

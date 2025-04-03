@@ -6,6 +6,7 @@ Component :: union {
   Transform,
   Camera,
   Light,
+  Mesh,
 }
 
 Transform :: struct {
@@ -58,6 +59,12 @@ Spot :: struct {
 Directional :: struct {
   color: m.Vec3 `json:"color"`,
   intensity: f32 `json:"intensity"`,
+}
+
+Mesh :: struct {
+  mesh_index: int,                // Index into global mesh storage
+  material_indices: []int,        // Index into global material storage for each primitive
+  visible: bool,                  // Whether the mesh should be rendered
 }
 
 Weapon :: struct {

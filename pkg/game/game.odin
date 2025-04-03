@@ -9,12 +9,19 @@ import c "pkg:game/ecs/component"
 import "pkg:game/event"
 import "pkg:game/input"
 import "pkg:core/filesystem/gltf"
+import "pkg:renderer/vk"
 import "core:os"
 
 
 
 init :: proc() {
     ecs.init()
+    
+    // Initialize the Vulkan renderer
+    if !vk.init() {
+        log.error("Failed to initialize Vulkan renderer")
+        return
+    }
     
     e0 := ecs.spawn()
 
@@ -59,17 +66,34 @@ init :: proc() {
 
     event.add_handler(event.Event_Type.WindowResize, any_resize_handler)
     
-    model, _ := gltf.load("./assets/models/DamagedHelmet.glb")
-    ecs.spawn_from_model(model)
+    // Load model and create entities with mesh components
+    model_path := "./assets/models/DamagedHelmet.glb"
+    model, err := gltf.load(model_path)
+    if err == .None {
+        // Upload model data to GPU
+        vk.load_model(model_path)
+        
+        // Spawn entities with mesh components
+        ecs.spawn_from_model(model)
+    } else {
+        log.error("Failed to load model:", model_path)
+    }
 }
 
 cleanup :: proc() {
+    // Clean up the Vulkan renderer
+    vk.cleanup()
+    
     ecs.cleanup()
 }
 
 loop :: proc() {
     ecs.loop()
     for !window.should_close() {
+        // Poll window events
         window.poll_events()
+        
+        // Update and render with Vulkan
+        vk.update()
     }
 }
