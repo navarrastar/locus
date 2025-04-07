@@ -4,6 +4,8 @@ import "core:log"
 import "base:runtime"
 import "pkg:game/event"
 import "pkg:game/input"
+import "vendor:wgpu"
+import "vendor:wgpu/glfwglue"
 
 import "vendor:glfw"
 
@@ -14,9 +16,9 @@ window: glfw.WindowHandle
 global_context: ^runtime.Context
 
 @(private)
-window_width: i32
+window_width: u32
 @(private)
-window_height: i32
+window_height: u32
 
 @(private)
 error_callback :: proc "c" (code: i32, desc: cstring) {
@@ -30,15 +32,15 @@ error_callback :: proc "c" (code: i32, desc: cstring) {
 @(private)
 framebuffer_size_callback :: proc "c" (window: glfw.WindowHandle, width, height: i32) {
     context = global_context^
-    window_width = width
-    window_height = height
+    window_width = u32(width)
+    window_height = u32(height)
     
-    e: event.Event = event.WindowResize_Event {
-        width = int(width),
-        height = int(height),
+    resize_event: event.Event = event.WindowResize_Event {
+        width = window_width,
+        height = window_height,
     }
 
-    event.trigger(e)
+    event.trigger(resize_event)
 }
 
 @(private)
@@ -57,7 +59,9 @@ key_callback :: proc "c" (window: glfw.WindowHandle, key, scancode, action, mods
     event.trigger(input_event)
 }
 
-init :: proc() -> bool {
+init :: proc(ctx: ^runtime.Context) -> bool {
+    global_context = ctx
+
     if !bool(glfw.Init()) {
         log.warn("Failed to initialize GLFW")
         return false
@@ -67,14 +71,14 @@ init :: proc() -> bool {
 
     window_width = 800
     window_height = 600
-    window = glfw.CreateWindow(window_width, window_height, "Vulkan Demo", nil, nil)
+    window = glfw.CreateWindow(i32(window_width), i32(window_height), "Locke", nil, nil)
     if window == nil {
         log.warn("Failed to create GLFW window")
         return false
     }
 
-    // Set window callbacks
     glfw.SetFramebufferSizeCallback(window, framebuffer_size_callback)
+    glfw.SetKeyCallback(window, key_callback)
 
     return true
 }
@@ -102,10 +106,14 @@ get_required_extensions :: proc() -> []cstring {
     return glfw.GetRequiredInstanceExtensions()
 }
 
-get_window_size :: proc() -> (width, height: i32) {
+get_window_size :: proc() -> (width, height: u32) {
     return window_width, window_height
 }
 
 get_window_handle :: proc() -> glfw.WindowHandle {
     return window
+}
+
+get_surface :: proc(instance: wgpu.Instance) -> wgpu.Surface {
+    return glfwglue.GetSurface(instance, window)
 }

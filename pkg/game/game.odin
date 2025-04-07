@@ -6,23 +6,41 @@ import "pkg:core/window"
 import "pkg:game/ecs"
 import m "pkg:core/math"
 import c "pkg:game/ecs/component"
+import r "pkg:renderer"
 import "pkg:game/event"
 import "pkg:game/input"
-import "pkg:core/filesystem/gltf"
-import "pkg:renderer/vk"
+import "pkg:core/filesystem/loaded"
+import "pkg:core/filesystem/loader"
 import "core:os"
 
 
-
 init :: proc() {
-    ecs.init()
-    
-    // Initialize the Vulkan renderer
-    if !vk.init() {
-        log.error("Failed to initialize Vulkan renderer")
-        return
+    if !r.init() {
+        panic("Failed to initialize renderer")
     }
-    
+
+    event.init()
+   
+    default_level()
+}
+
+cleanup :: proc() {
+    event.cleanup()
+}
+
+loop :: proc() {
+    ecs.for_each(.Mesh, proc(e: ecs.Entity) {
+        mesh_comp := ecs.get_component(.Mesh, e).(^c.Mesh)
+        mesh := loaded.get_mesh(mesh_comp.name)
+        r.render(mesh)
+    })
+}
+
+default_level :: proc() {
+    if damaged_helmet := loaded.get_model("DamagedHelmet"); damaged_helmet != nil {
+        ecs.spawn_from_model(damaged_helmet)
+    }
+
     e0 := ecs.spawn()
 
     camera: c.Camera = c.Perspective {
@@ -30,18 +48,18 @@ init :: proc() {
         far = 100.0,
         fov = 103.0,
     };
-    ecs.add_component(e0, camera)
-
+    ecs.add_component(camera, e0)
 
     light: c.Light = c.Point {
         color = m.Vec3{0, 0, 0},
         intensity = 1.0,
         range = 10.0,
     };
-    ecs.add_component(e0, light)
+    ecs.add_component(light, e0)
 
     e1 := ecs.spawn(name="test")
 
+    
     w_press_event := event.Input_Event {
         key = input.KEY_W,
         action = input.ACTION_PRESS,
@@ -49,7 +67,6 @@ init :: proc() {
 
     w_handler := event.Handler {
         callback = proc(e: event.Event) -> bool {
-            log.debug(e)
             return true
         },
     }
@@ -59,41 +76,10 @@ init :: proc() {
     any_resize_handler := event.Handler {
         callback = proc(e: event.Event) -> bool {
             resize_data := e.(event.WindowResize_Event)
-            log.debug("Any resize event handler triggered! New dimensions:", resize_data.width, "x", resize_data.height)
             return true
         },
     }
 
-    event.add_handler(event.Event_Type.WindowResize, any_resize_handler)
-    
-    // Load model and create entities with mesh components
-    model_path := "./assets/models/DamagedHelmet.glb"
-    model, err := gltf.load(model_path)
-    if err == .None {
-        // Upload model data to GPU
-        vk.load_model(model_path)
-        
-        // Spawn entities with mesh components
-        ecs.spawn_from_model(model)
-    } else {
-        log.error("Failed to load model:", model_path)
-    }
-}
+    event.add_handler(event.Type.WindowResize, any_resize_handler) 
 
-cleanup :: proc() {
-    // Clean up the Vulkan renderer
-    vk.cleanup()
-    
-    ecs.cleanup()
-}
-
-loop :: proc() {
-    ecs.loop()
-    for !window.should_close() {
-        // Poll window events
-        window.poll_events()
-        
-        // Update and render with Vulkan
-        vk.update()
-    }
 }

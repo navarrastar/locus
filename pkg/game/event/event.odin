@@ -5,9 +5,23 @@ import "pkg:game/input"
 
 manager: Manager
 
+Manager :: struct {
+    specific_handlers: map[Event][dynamic]Handler,
+    generic_handlers: map[Type][dynamic]Handler,
+}
+
 Event :: union {
     Input_Event,
     WindowResize_Event,
+}
+
+Handler :: struct {
+    callback: proc(event: Event) -> bool,
+}
+
+Type :: enum {
+    Input,
+    WindowResize,
 }
 
 Input_Event :: struct {
@@ -16,20 +30,23 @@ Input_Event :: struct {
 }
 
 WindowResize_Event :: struct {
-    width: int,
-    height: int,
+    width: u32,
+    height: u32,
 }
 
-Handler :: struct {
-    callback: proc(event: Event) -> bool,
+init :: proc() {
+    manager = Manager {
+        specific_handlers = make(map[Event][dynamic]Handler),
+        generic_handlers = make(map[Type][dynamic]Handler),
+    }
 }
 
-Event_Type :: enum {
-    Input,
-    WindowResize,
+cleanup :: proc() {
+    delete(manager.specific_handlers)
+    delete(manager.generic_handlers)
 }
 
-get_event_type :: proc(e: Event) -> Event_Type {
+get_event_type :: proc(e: Event) -> Type {
     switch v in e {
         case Input_Event: return .Input
         case WindowResize_Event: return .WindowResize
@@ -39,17 +56,8 @@ get_event_type :: proc(e: Event) -> Event_Type {
     }
 }
 
-Manager :: struct {
-    specific_handlers: map[Event][dynamic]Handler,
-    generic_handlers: map[Event_Type][dynamic]Handler,
-}
 
-init :: proc() {
-    manager = Manager {
-        specific_handlers = make(map[Event][dynamic]Handler),
-        generic_handlers = make(map[Event_Type][dynamic]Handler),
-    }
-}
+add_handler :: proc{add_specific_handler, add_generic_handler}
 
 @(private)
 add_specific_handler :: proc(e: Event, handler: Handler) -> bool {
@@ -63,7 +71,7 @@ add_specific_handler :: proc(e: Event, handler: Handler) -> bool {
 }
 
 @(private)
-add_generic_handler :: proc(event_type: Event_Type, handler: Handler) -> bool {
+add_generic_handler :: proc(event_type: Type, handler: Handler) -> bool {
     if event_type in manager.generic_handlers {
         append(&manager.generic_handlers[event_type], handler)
     } else {
@@ -73,17 +81,15 @@ add_generic_handler :: proc(event_type: Event_Type, handler: Handler) -> bool {
     return true
 }
 
-add_handler :: proc{add_specific_handler, add_generic_handler}
-
 trigger :: proc(e: Event) {
-    // Call handlers for the specific event data
+    log.debug(e)
+
     if e in manager.specific_handlers {
         for handler in manager.specific_handlers[e] {
             handler.callback(e)
         }
     }
     
-    // Call handlers for the event type
     event_type := get_event_type(e)
     if event_type in manager.generic_handlers {
         for handler in manager.generic_handlers[event_type] {

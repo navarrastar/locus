@@ -1,6 +1,7 @@
 package component
 
 import m "pkg:core/math"
+import "pkg:core"
 
 Component :: union {
   Transform,
@@ -62,14 +63,11 @@ Directional :: struct {
 }
 
 Mesh :: struct {
-  mesh_index: int,                // Index into global mesh storage
-  material_indices: []int,        // Index into global material storage for each primitive
-  visible: bool,                  // Whether the mesh should be rendered
+  name: string
 }
 
 Weapon :: struct {
   damage: f32 `json:"damage"`,
   falloff: map[u32]u32 `json:"range"`, // key: meters, value: % damage
   fire_rate: f32 `json:"fireRate"`,
-
 }
