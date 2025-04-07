@@ -8,8 +8,9 @@ models: map[string]loader.Model
 
 meshes: map[string]^loader.Mesh
 
-init :: proc() {
+init :: proc() -> bool {
     models = make(map[string]loader.Model)
+    return true
 }
 
 cleanup :: proc() {

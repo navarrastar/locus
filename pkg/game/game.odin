@@ -1,26 +1,21 @@
 package game
 
 import "core:log"
+import "core:os"
 
 import "pkg:core/window"
-import "pkg:game/ecs"
+import "pkg:core/ecs"
 import m "pkg:core/math"
-import c "pkg:game/ecs/component"
-import r "pkg:renderer"
-import "pkg:game/event"
-import "pkg:game/input"
+import c "pkg:core/ecs/component"
+import r "pkg:core/renderer"
+import "pkg:core/event"
+import "pkg:core/input"
 import "pkg:core/filesystem/loaded"
 import "pkg:core/filesystem/loader"
-import "core:os"
 
 
 init :: proc() {
-    if !r.init() {
-        panic("Failed to initialize renderer")
-    }
-
-    event.init()
-   
+       
     default_level()
 }
 
@@ -29,18 +24,10 @@ cleanup :: proc() {
 }
 
 loop :: proc() {
-    ecs.for_each(.Mesh, proc(e: ecs.Entity) {
-        mesh_comp := ecs.get_component(.Mesh, e).(^c.Mesh)
-        mesh := loaded.get_mesh(mesh_comp.name)
-        r.render(mesh)
-    })
+    // Update World
 }
 
 default_level :: proc() {
-    if damaged_helmet := loaded.get_model("DamagedHelmet"); damaged_helmet != nil {
-        ecs.spawn_from_model(damaged_helmet)
-    }
-
     e0 := ecs.spawn()
 
     camera: c.Camera = c.Perspective {

@@ -6,14 +6,15 @@ import "core:slice"
 import "core:time"
 import "core:os"
 import "core:path/filepath"
+import "core:fmt"
+
 import "pkg:core"
 import "pkg:core/filesystem/loader"
 import "pkg:core/filesystem/loaded"
 import m "pkg:core/math"
 import "pkg:game"
-import "pkg:renderer"
+import r "pkg/core/renderer"
 import "pkg:core/window"
-import "core:fmt"
 
 
 
@@ -28,9 +29,6 @@ main :: proc() {
 	core.init(&ctx)
 	defer core.cleanup()
 
-	renderer.init()
-	defer renderer.cleanup()
-
 	filepath.walk("./assets/models", load_model, nil)
 
 	game.init()
@@ -39,12 +37,8 @@ main :: proc() {
 	for !window.should_close() {
 		window.poll_events()
 		
-		if ok := renderer.begin_frame(); ok {
-			
-			game.loop()
-
-			renderer.end_frame()
-		}
+		game.loop()
+		r.loop()
 	}
 	
 }

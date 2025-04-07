@@ -4,7 +4,7 @@ import "core:log"
 import "core:strings"
 import "core:fmt"
 
-import c "pkg:game/ecs/component"
+import c "pkg:core/ecs/component"
 import m "pkg:core/math"
 import "pkg:core/filesystem/loader"
 

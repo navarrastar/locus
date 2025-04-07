@@ -1,7 +1,6 @@
 package component
 
 import m "pkg:core/math"
-import "pkg:core"
 
 Component :: union {
   Transform,

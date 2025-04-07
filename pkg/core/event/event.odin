@@ -1,7 +1,7 @@
 package event
 
 import "core:log"
-import "pkg:game/input"
+import "pkg:core/input"
 
 manager: Manager
 
@@ -34,11 +34,12 @@ WindowResize_Event :: struct {
     height: u32,
 }
 
-init :: proc() {
+init :: proc() -> bool {
     manager = Manager {
         specific_handlers = make(map[Event][dynamic]Handler),
         generic_handlers = make(map[Type][dynamic]Handler),
     }
+    return true
 }
 
 cleanup :: proc() {

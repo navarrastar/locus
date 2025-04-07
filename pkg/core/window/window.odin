@@ -2,8 +2,8 @@ package window
 
 import "core:log"
 import "base:runtime"
-import "pkg:game/event"
-import "pkg:game/input"
+import "pkg:core/event"
+import "pkg:core/input"
 import "vendor:wgpu"
 import "vendor:wgpu/glfwglue"
 

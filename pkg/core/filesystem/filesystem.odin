@@ -2,8 +2,8 @@ package filesystem
 
 import "pkg:core/filesystem/loaded"
 
-init :: proc() {
-    loaded.init()
+init :: proc() -> bool {
+    return loaded.init()
 }
 
 cleanup :: proc() {
