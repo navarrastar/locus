@@ -4,9 +4,13 @@ import "core:log"
 import "core:strings"
 import "core:fmt"
 
+import "vendor:wgpu"
+
 import c "pkg:core/ecs/component"
 import m "pkg:core/math"
 import "pkg:core/filesystem/loader"
+
+
 
 eid :: u32
 
@@ -38,7 +42,7 @@ World :: struct {
     component_masks: [1024]u32,
 }
 
-spawn :: proc(pos := m.Vec3{}, rot := m.Vec3{}, s := f32{}, name := string{}) -> (e: Entity) {
+spawn :: proc(pos := m.Vec3{}, rot := m.Vec3{}, s := f32(1), name := string{}) -> (e: Entity) {
     e = Entity {
         name = name,
         id = w.entity_count,
@@ -152,4 +156,13 @@ spawn_from_model :: proc(model: ^loader.Model) -> []Entity {
     // spawn() increments w.entity_count, so this is 
     // the slice of all entities that this Model added
     return w.entities[start_id:w.entity_count]
+}
+
+get_first_camera :: proc() -> Entity {
+    for i in 0..<int(w.entity_count) {
+        if (w.component_masks[i] & u32(ComponentType.Camera)) != 0 {
+            return w.entities[i]
+        }
+    }
+    panic("Tried to get first camera but no camera found")
 }

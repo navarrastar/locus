@@ -1,3 +1,4 @@
+#+private
 package renderer
 
 import "core:fmt"
@@ -7,7 +8,6 @@ import "vendor:wgpu"
 import "pkg:core/window"
 
 
-@(private)
 init_wgpu :: proc() {
     state.instance = wgpu.CreateInstance(nil)
     assert(state.instance != nil, "Failed to initialize wgpu instance")
@@ -24,7 +24,7 @@ init_wgpu :: proc() {
     wgpu.InstanceRequestAdapter(state.instance, &adapter_opt, request_adapter_callback_info)
 }
 
-@(require_results, private)
+@(require_results)
 set_surface_texture :: proc() -> bool {
     surface_texture := wgpu.SurfaceGetCurrentTexture(state.surface)
     switch surface_texture.status {
@@ -42,7 +42,6 @@ set_surface_texture :: proc() -> bool {
     fmt.panicf("surface_texture has an unexpected status: %s", surface_texture.status)
 }
 
-@(private)
 on_adapter :: proc "c" (
     status: wgpu.RequestAdapterStatus,
     adapter: wgpu.Adapter,
@@ -69,7 +68,6 @@ on_adapter :: proc "c" (
     wgpu.AdapterRequestDevice(adapter, &device_desc, request_device_callback_info) 
 }
 
-@(private)
 on_device :: proc "c" (
     status: wgpu.RequestDeviceStatus,
     device: wgpu.Device,
@@ -81,7 +79,6 @@ on_device :: proc "c" (
     
     fmt.assertf(status == .Success, "Failed to initialize wgpu device\n    Status: %s", status)
     assert(device != nil, "Failed to initialize wgpu device")
-
     state.device = device
 
     width, height := window.get_window_size()
@@ -153,7 +150,6 @@ on_device :: proc "c" (
     state.pipeline = wgpu.DeviceCreateRenderPipeline(device, &render_pipeline_desc)
 }
 
-@(private)
 on_device_lost :: proc "c" (
     device: ^wgpu.Device,
     reason: wgpu.DeviceLostReason,

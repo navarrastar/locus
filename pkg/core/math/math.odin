@@ -2,6 +2,8 @@ package math2
 
 import "core:math/linalg"
 
+
+
 Vec2 :: linalg.Vector2f32
 Vec3 :: linalg.Vector3f32
 Vec4 :: linalg.Vector4f32
@@ -50,7 +52,6 @@ look_at :: proc(position: Vec3, target: Vec3, up: Vec3) -> Mat4 {
     return linalg.matrix4_look_at_f32(position, target, up)
 }
 
-
 perspective :: proc(fov: f32, aspect: f32, near: f32, far: f32) -> Mat4 {
     return linalg.matrix4_perspective_f32(fov, aspect, near, far)
 }
@@ -65,4 +66,17 @@ to_radians :: proc(degrees: f32) -> f32 {
 
 to_degrees :: proc(radians: f32) -> f32 {
     return linalg.to_degrees(radians)
+}
+
+to_matrix :: proc(pos: Vec3, rot: Quat, scale: f32) -> Mat4 {
+
+    translation := linalg.matrix4_translate_f32(pos)
+    rotation := linalg.matrix4_from_quaternion_f32(rot)
+    scaling := linalg.matrix4_scale_f32(Vec3{scale, scale, scale})
+
+    return linalg.matrix_mul(translation, linalg.matrix_mul(rotation, scaling))
+}
+
+mvp :: proc(pos: Vec3, rot: Quat, scale: f32, view: Mat4, proj: Mat4) -> Mat4 {
+    return linalg.matrix_mul(view, linalg.matrix_mul(proj, to_matrix(pos, rot, scale)))
 }

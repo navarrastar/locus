@@ -2,15 +2,17 @@ package renderer
 
 import "core:log"
 import "base:runtime"
+import "core:path/filepath"
 
 import "vendor:wgpu"
 
 import "pkg:core/window"
 
 
-
+@(private)
 state: State
 
+@(private)
 State :: struct {
     ctx: runtime.Context,
 
@@ -30,10 +32,19 @@ State :: struct {
     module:   wgpu.ShaderModule,
     pipeline: wgpu.RenderPipeline,
     pipeline_layout: wgpu.PipelineLayout,
+
+    // Buffers
+    model_buffer: wgpu.Buffer,
+    bind_group_0: wgpu.BindGroup,
 }
 
 init :: proc() -> bool {
     init_wgpu()
+
+    load_shaders()
+    load_materials()
+
+    create_bind_group_0()
 
     return true
 }
@@ -41,14 +52,17 @@ init :: proc() -> bool {
 loop :: proc() {
     begin_frame()
 
-    wgpu.RenderPassEncoderSetPipeline(state.render_pass_encoder, state.pipeline)
-    wgpu.RenderPassEncoderDraw(state.render_pass_encoder, 3, 1, 0, 0)
-    // draw_world()
+    draw_world()
     // draw_ui()
 
     end_frame()
 }
 
+cleanup :: proc() {
+
+}
+
+@(private)
 begin_frame :: proc() -> bool {
     if !set_surface_texture() do return false
 
@@ -72,6 +86,7 @@ begin_frame :: proc() -> bool {
     return true
 }
 
+@(private)
 end_frame :: proc() {
     wgpu.RenderPassEncoderEnd(state.render_pass_encoder)
     wgpu.RenderPassEncoderRelease(state.render_pass_encoder)
@@ -82,8 +97,4 @@ end_frame :: proc() {
     wgpu.CommandEncoderRelease(state.command_encoder)
     wgpu.TextureViewRelease(state.surface_texture_view)
     wgpu.TextureRelease(state.surface_texture)
-}
-
-cleanup :: proc() {
-
 }

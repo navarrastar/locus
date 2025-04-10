@@ -25,11 +25,11 @@ main :: proc() {
 		)
 	}
 
+	filepath.walk("./assets/models", load_model, nil)
+
 	ctx := context
 	core.init(&ctx)
 	defer core.cleanup()
-
-	filepath.walk("./assets/models", load_model, nil)
 
 	game.init()
 	defer game.cleanup()
@@ -46,10 +46,10 @@ main :: proc() {
 load_model :: proc(info: os.File_Info, in_err: os.Error, user_data: rawptr) -> (err: os.Error, skip_dir: bool) {
 	fmt.assertf(in_err == nil, "Error loading model file:", info.name)
 	
-	if info.is_dir do return err, skip_dir
+	if info.is_dir do return
 
 	model := loader.load_gltf(info.fullpath)
 	loaded.add_model(model)
 
-	return err, skip_dir
+	return
 }

@@ -157,7 +157,6 @@ Image :: struct {
     uri: string,
     mime_type: string,
     buffer_view: ^BufferView,
-    data: []byte, // Loaded image data
 }
 
 Skin :: struct {
@@ -960,7 +959,6 @@ free_model :: proc(model: ^Model) {
         if image.name != "" do delete(image.name)
         if image.uri != "" do delete(image.uri)
         if image.mime_type != "" do delete(image.mime_type)
-        if len(image.data) > 0 do delete(image.data)
     }
     if len(model.images) > 0 do delete(model.images)
     

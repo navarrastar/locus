@@ -28,6 +28,7 @@ loop :: proc() {
 }
 
 default_level :: proc() {
+    spawn_player()
     e0 := ecs.spawn()
 
     camera: c.Camera = c.Perspective {
@@ -45,6 +46,8 @@ default_level :: proc() {
     ecs.add_component(light, e0)
 
     e1 := ecs.spawn(name="test")
+
+    
 
     
     w_press_event := event.Input_Event {
