@@ -97,57 +97,6 @@ on_device :: proc "c" (
 
     state.queue = wgpu.DeviceGetQueue(device)
     assert(state.queue != nil, "Failed to get wgpu queue")
-
-    shader :: `
-	@vertex
-	fn vs_main(@builtin(vertex_index) in_vertex_index: u32) -> @builtin(position) vec4<f32> {
-		let x = f32(i32(in_vertex_index) - 1);
-		let y = f32(i32(in_vertex_index & 1u) * 2 - 1);
-		return vec4<f32>(x, y, 0.0, 1.0);
-	}
-
-	@fragment
-	fn fs_main() -> @location(0) vec4<f32> {
-		return vec4<f32>(1.0, 0.0, 0.0, 1.0);
-	}
-    `
-    shader_module_desc := wgpu.ShaderModuleDescriptor {
-        nextInChain = &wgpu.ShaderSourceWGSL {
-            sType = .ShaderSourceWGSL,
-            code = shader
-        }
-    }
-    state.module = wgpu.DeviceCreateShaderModule(
-        device,
-        &shader_module_desc
-    )
-
-    state.pipeline_layout = wgpu.DeviceCreatePipelineLayout(device, &{})
-
-    render_pipeline_desc := wgpu.RenderPipelineDescriptor {
-        layout = state.pipeline_layout,
-        vertex = {
-            module = state.module,
-            entryPoint = "vs_main",
-        },
-        fragment = &{
-            module = state.module,
-            entryPoint = "fs_main",
-            targetCount = 1,
-            targets = &wgpu.ColorTargetState {
-                format = .BGRA8Unorm,
-                writeMask = wgpu.ColorWriteMaskFlags_All
-            }
-        },
-        primitive = {
-            topology = .TriangleList
-        },
-        multisample = {
-            count = 1,
-            mask = 0xFFFFFFFF
-        }
-    }
-    state.pipeline = wgpu.DeviceCreateRenderPipeline(device, &render_pipeline_desc)
 }
 
 on_device_lost :: proc "c" (

@@ -3,7 +3,11 @@
     "collections": [
         { 
             "name": "pkg", 
-            "path": "pkg" 
+            "path": "pkg"
+        },
+        {
+            "name": "third_party",
+            "path": "third_party"
         }
     ],
     "enable_document_symbols": true,

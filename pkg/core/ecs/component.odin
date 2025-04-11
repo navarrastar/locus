@@ -13,7 +13,7 @@ Component :: union {
 
 Transform :: struct {
   pos: m.Vec3,
-  rot: m.Quat,
+  rot: m.Vec3,
   scale: f32,
 }
 

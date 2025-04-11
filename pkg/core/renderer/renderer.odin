@@ -30,7 +30,6 @@ State :: struct {
     command_encoder: wgpu.CommandEncoder,
     render_pass_encoder: wgpu.RenderPassEncoder,
     module:   wgpu.ShaderModule,
-    pipeline: wgpu.RenderPipeline,
     pipeline_layout: wgpu.PipelineLayout,
 
     // Buffers
@@ -53,13 +52,12 @@ loop :: proc() {
     begin_frame()
 
     draw_world()
-    // draw_ui()
 
     end_frame()
 }
 
 cleanup :: proc() {
-
+    // destroy wgpu resources
 }
 
 @(private)

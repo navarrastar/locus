@@ -1,24 +1,28 @@
 package core
 
-import "core:log"
 import "base:runtime"
+import "core:log"
 
 import m "pkg:core/math"
 import "pkg:core/window"
 import "pkg:core/filesystem"
 import "pkg:core/event"
-import r "pkg:core/renderer"
+import "pkg:core/renderer"
 
 
 init :: proc(ctx: ^runtime.Context) {
     if !window.init(ctx)  do panic("Failed to initialize window")
     if !filesystem.init() do panic("Failed to initialize filesystem")
-    if !r.init()          do panic("Failed to initialize renderer")
+    if !renderer.init()   do panic("Failed to initialize renderer")
     if !event.init()      do panic("Failed to initalize event")
+}
 
+loop :: proc() {
+    renderer.loop()
 }
 
 cleanup :: proc() {
+    renderer.cleanup()
     window.cleanup()
     filesystem.cleanup()
 }

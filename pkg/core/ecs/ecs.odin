@@ -49,7 +49,7 @@ spawn :: proc(pos := m.Vec3{}, rot := m.Vec3{}, s := f32(1), name := string{}) -
 
     t: Transform = {
         pos = pos,
-        rot = m.quat(rot),
+        rot = rot,
         scale = s,
     }
 
@@ -98,4 +98,13 @@ get_first_camera :: proc() -> Entity {
         }
     }
     panic("No camera found")
+}
+
+get_entity_by_name :: proc(name: string) -> Entity {
+    for e in w.entities {
+        if e.name == name {
+            return e
+        }
+    }
+    fmt.panicf("No entity found with name: %s\n", name)
 }

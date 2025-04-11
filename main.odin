@@ -38,7 +38,7 @@ main :: proc() {
 		window.poll_events()
 		
 		game.loop()
-		r.loop()
+		core.loop()
 	}
 	
 }

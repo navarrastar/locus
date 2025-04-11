@@ -28,18 +28,16 @@ draw_entity :: proc (e: ecs.Entity) {
     mvp_matrix: m.Mat4
     switch type in camera_comp {
         case ecs.Perspective:
-            view_matrix := m.to_matrix(camera_transform.pos, camera_transform.rot, camera_transform.scale)
-            projection_matrix := m.perspective(type.fov, 1920 / 1080, type.near, type.far)
-            mvp_matrix = m.mvp(transform_comp.pos, transform_comp.rot, transform_comp.scale, view_matrix, projection_matrix)
+            view_matrix := m.to_matrix(camera_transform.pos, m.quat(camera_transform.rot), camera_transform.scale)
+            projection_matrix := m.perspective(type.fov, window.get_aspect_ratio(), type.near, type.far)
+            mvp_matrix = m.mvp(transform_comp.pos, m.quat(transform_comp.rot), transform_comp.scale, view_matrix, projection_matrix)
         case ecs.Orthographic:
-            view_matrix := m.to_matrix(camera_transform.pos, camera_transform.rot, camera_transform.scale)
+            view_matrix := m.to_matrix(camera_transform.pos, m.quat(camera_transform.rot), camera_transform.scale)
             left, right := -type.xmag, type.xmag
             bottom, top := -type.ymag, type.ymag
             projection_matrix := m.ortho(left, right, bottom, top, type.near, type.far)
-            mvp_matrix = m.mvp(transform_comp.pos, transform_comp.rot, transform_comp.scale, view_matrix, projection_matrix)
+            mvp_matrix = m.mvp(transform_comp.pos, m.quat(transform_comp.rot), transform_comp.scale, view_matrix, projection_matrix)
     }
-
-    fmt.printfln("mvp: %v", mvp_matrix)
 
     update_bind_group_0(&mvp_matrix)
     draw_mesh(mesh_comp.name)
@@ -54,9 +52,7 @@ draw_mesh :: proc (name: string) {
     for primitive in mesh.primitives {
         pipeline := primitive.material.pipeline
 
-        if pipeline != state.pipeline {
-            wgpu.RenderPassEncoderSetPipeline(state.render_pass_encoder, pipeline)
-        }
+        wgpu.RenderPassEncoderSetPipeline(state.render_pass_encoder, pipeline)
 
         wgpu.RenderPassEncoderSetBindGroup(state.render_pass_encoder, 0, state.bind_group_0, nil)
         wgpu.RenderPassEncoderSetBindGroup(state.render_pass_encoder, 1, primitive.material.bind_group, nil)
