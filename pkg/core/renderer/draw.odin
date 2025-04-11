@@ -8,40 +8,31 @@ import "core:log"
 import "vendor:wgpu"
 
 import "pkg:core/ecs"
-import c "pkg:core/ecs/component"
 import m "pkg:core/math"
-
+import "pkg:core/window"
 
 
 draw_world :: proc () {
-    ecs.for_each(.Mesh, draw_entity)
+    ecs.for_each({ .Mesh }, draw_entity)
 }
 
 draw_ui :: proc () {}
 
 draw_entity :: proc (e: ecs.Entity) {
-    any_comp := ecs.get_component(.Mesh, e)
-    mesh_comp := any_comp.(^c.Mesh)
-
-    any_comp = ecs.get_component(.Transform, e)
-    transform_comp := any_comp.(^c.Transform)
+   
+    transform_comp, mesh_comp := ecs.get_components(ecs.Transform{}, ecs.Mesh{}, e)
 
     camera := ecs.get_first_camera()
-
-    any_comp = ecs.get_component(.Camera, camera)
-    camera_comp := any_comp.(^c.Camera)
-
-    any_comp = ecs.get_component(.Transform, camera)
-    camera_transform_comp := any_comp.(^c.Transform)
+    camera_transform, camera_comp := ecs.get_components(ecs.Transform{}, ecs.Camera{}, camera)
 
     mvp_matrix: m.Mat4
     switch type in camera_comp {
-        case c.Perspective:
-            view_matrix := m.to_matrix(camera_transform_comp.pos, camera_transform_comp.rot, camera_transform_comp.scale)
+        case ecs.Perspective:
+            view_matrix := m.to_matrix(camera_transform.pos, camera_transform.rot, camera_transform.scale)
             projection_matrix := m.perspective(type.fov, 1920 / 1080, type.near, type.far)
             mvp_matrix = m.mvp(transform_comp.pos, transform_comp.rot, transform_comp.scale, view_matrix, projection_matrix)
-        case c.Orthographic:
-            view_matrix := m.to_matrix(camera_transform_comp.pos, camera_transform_comp.rot, camera_transform_comp.scale)
+        case ecs.Orthographic:
+            view_matrix := m.to_matrix(camera_transform.pos, camera_transform.rot, camera_transform.scale)
             left, right := -type.xmag, type.xmag
             bottom, top := -type.ymag, type.ymag
             projection_matrix := m.ortho(left, right, bottom, top, type.near, type.far)

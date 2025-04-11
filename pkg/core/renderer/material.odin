@@ -199,7 +199,7 @@ create_pipeline :: proc(material: ^loader.Material, shader: ^Shader) -> wgpu.Ren
     primitive_state := wgpu.PrimitiveState {
         topology = .TriangleList,
         frontFace = .CCW,  // Counter-clockwise front face
-        cullMode = .Back,  // Cull back faces
+        cullMode = .None,  // Cull back faces
     }
     
     multisample_state := wgpu.MultisampleState {

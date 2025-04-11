@@ -77,7 +77,7 @@ begin_frame :: proc() -> bool {
             loadOp = .Clear,
             storeOp = .Store,
             depthSlice = wgpu.DEPTH_SLICE_UNDEFINED,
-            clearValue = { 0, 1, 0, 1 }
+            clearValue = { 0.3, 0.34, 0.3, 1 }
         }
     }
 

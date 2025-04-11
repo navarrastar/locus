@@ -5,16 +5,16 @@ package game
 
 
 import "pkg:core/ecs"
-import c "pkg:core/ecs/component"
+import m "pkg:core/math"
 
 
 spawn_player :: proc() {
     player := ecs.spawn(name="player")
 
-    mesh := c.Mesh {
+    mesh := ecs.Mesh {
         name = "sphere"
     }
 
-    ecs.add_component(mesh, player)
+    ecs.add_components(player, mesh)
 
 }

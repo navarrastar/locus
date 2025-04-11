@@ -117,3 +117,7 @@ get_window_handle :: proc() -> glfw.WindowHandle {
 get_surface :: proc(instance: wgpu.Instance) -> wgpu.Surface {
     return glfwglue.GetSurface(instance, window)
 }
+
+get_aspect_ratio :: proc() -> f32 {
+    return f32(window_width) / f32(window_height)
+}
