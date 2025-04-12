@@ -11,8 +11,18 @@ Manager :: struct {
 }
 
 Event :: union {
-    Input_Event,
-    WindowResize_Event,
+    Event_Input,
+    Event_WindowResize,
+}
+
+Event_Input :: struct {
+    key: int,
+    action: InputAction,
+}
+
+Event_WindowResize :: struct {
+    width: u32,
+    height: u32,
 }
 
 Handler :: struct {
@@ -24,14 +34,10 @@ Type :: enum {
     WindowResize,
 }
 
-Input_Event :: struct {
-    key: int,
-    action: int,
-}
-
-WindowResize_Event :: struct {
-    width: u32,
-    height: u32,
+InputAction :: enum {
+    Press,
+    Down,
+    Release
 }
 
 init :: proc() -> bool {
@@ -49,8 +55,8 @@ cleanup :: proc() {
 
 get_event_type :: proc(e: Event) -> Type {
     switch v in e {
-        case Input_Event: return .Input
-        case WindowResize_Event: return .WindowResize
+        case Event_Input: return .Input
+        case Event_WindowResize: return .WindowResize
         case:
             log.error("Unknown event type")
             return nil

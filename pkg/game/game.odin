@@ -9,20 +9,19 @@ import m "pkg:core/math"
 import r "pkg:core/renderer"
 import "pkg:core/event"
 import "pkg:core/input"
-import "pkg:core/filesystem/loaded"
-import "pkg:core/filesystem/loader"
+
 
 
 init :: proc() {
-       
     default_level()
 }
 
 cleanup :: proc() {
-    event.cleanup()
+
 }
 
 loop :: proc() {
+    update_camera()
     update_player()
 }
 
@@ -32,7 +31,7 @@ default_level :: proc() {
 
     any_resize_handler := event.Handler {
         callback = proc(e: event.Event) -> bool {
-            resize_data := e.(event.WindowResize_Event)
+            resize_data := e.(event.Event_WindowResize)
             return true
         },
     }

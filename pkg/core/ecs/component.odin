@@ -4,73 +4,59 @@ import m "pkg:core/math"
 import "core:log"
 import "core:fmt"
 
+import rl "vendor:raylib"
+
+
 Component :: union {
-  Transform,
-  Camera,
-  Light,
-  Mesh,
+    Transform,
+    Camera,
+    Light,
+    Model,
+    Label
 }
 
 Transform :: struct {
-  pos: m.Vec3,
-  rot: m.Vec3,
-  scale: f32,
+    pos: m.Vec3,
+    rot: m.Vec3,
+    scale: f32,
 }
 
-Camera :: union { 
-  Perspective,
-  Orthographic,
-}
+Camera :: rl.Camera3D
 
-Perspective :: struct {
-  near: f32 `json:"znear"`,
-  far: f32 `json:"zfar"`,
-
-  fov: f32 `json:"yfov"`,
-}
-
-Orthographic :: struct {
-  near: f32 `json:"znear"`,
-  far: f32 `json:"zfar"`,
-
-  xmag: f32 `json:"xmag"`, 
-  ymag: f32 `json:"ymag"`,
-}
+Label :: string
 
 Light :: union {
-  Point,
-  Spot,
-  Directional,
+    Point,
+    Spot,
+    Directional,
 }
 
 Point :: struct {
-  color: m.Vec3 `json:"color"`,
-  intensity: f32 `json:"intensity"`,
-  range: f32 `json:"range"`,
+    color: m.Vec3 `json:"color"`,
+    intensity: f32 `json:"intensity"`,
+    range: f32 `json:"range"`,
 }
 
 Spot :: struct {
-  color: m.Vec3 `json:"color"`,
-  intensity: f32 `json:"intensity"`,
-  range: f32 `json:"range"`,
+    color: m.Vec3 `json:"color"`,
+    intensity: f32 `json:"intensity"`,
+    range: f32 `json:"range"`,
 
-  inner_cone_angle: f32 `json:"innerConeAngle"`,
-  outer_cone_angle: f32 `json:"outerConeAngle"`,
+    inner_cone_angle: f32 `json:"innerConeAngle"`,
+    outer_cone_angle: f32 `json:"outerConeAngle"`,
 }
 
 Directional :: struct {
-  color: m.Vec3 `json:"color"`,
-  intensity: f32 `json:"intensity"`,
+    color: m.Vec3 `json:"color"`,
+    intensity: f32 `json:"intensity"`,
 }
 
-Mesh :: struct {
-  name: string
-}
+Model :: rl.Model
 
 Weapon :: struct {
-  damage: f32 `json:"damage"`,
-  falloff: map[u32]u32 `json:"range"`, // key: meters, value: % damage
-  fire_rate: f32 `json:"fireRate"`,
+    damage: f32 `json:"damage"`,
+    falloff: map[u32]u32 `json:"range"`, // key: meters, value: % damage
+    fire_rate: f32 `json:"fireRate"`,
 }
 
 add_components :: proc(e: Entity, components: ..Component) -> bool {
@@ -79,6 +65,10 @@ add_components :: proc(e: Entity, components: ..Component) -> bool {
             case Transform:
                 w.transform[e.id] = component.(Transform)
                 w.entities[e.id].comp_flags |= { .Transform }
+
+            case Label:
+                w.label[e.id] = component.(Label)
+                w.entities[e.id].comp_flags |= { .Label }
 
             case Camera:
                 log.debug("Adding camera to", e, "with value", component.(Camera))
@@ -90,10 +80,10 @@ add_components :: proc(e: Entity, components: ..Component) -> bool {
                 w.light[e.id] = component.(Light)
                 w.entities[e.id].comp_flags |= { .Light }
 
-            case Mesh:
-                log.debug("Adding mesh to", e, "with value", component.(Mesh))
-                w.mesh[e.id] = component.(Mesh)
-                w.entities[e.id].comp_flags |= { .Mesh }
+            case Model:
+                log.debug("Adding mesh to", e, "with value", component.(Model))
+                w.model[e.id] = component.(Model)
+                w.entities[e.id].comp_flags |= { .Model }
 
             case:
                 fmt.panicf("Unknown component type", component)
@@ -106,28 +96,35 @@ has_components :: proc(e: Entity, comp_flags: ComponentTypeFlags) -> bool {
     return comp_flags <= e.comp_flags
 }
 
-get_components :: proc { get_transform_component, get_mesh_component, get_camera_component, get_light_component, get_transform_mesh_component, get_transform_camera_component }
+@(require_results)
+get_components :: proc { get_transform_component, get_model_component, get_camera_component, get_light_component, get_transform_model_component, get_transform_camera_component }
 
+@(private)
 get_transform_component :: proc(transform: Transform, e: Entity) -> ^Transform {
     return &w.transform[e.id]
 }
 
-get_mesh_component :: proc(mesh: Mesh, e: Entity) -> ^Mesh {
-    return &w.mesh[e.id]
+@(private)
+get_model_component :: proc(model: Model, e: Entity) -> ^Model {
+    return &w.model[e.id]
 }
 
+@(private)
 get_camera_component :: proc(camera: Camera, e: Entity) -> ^Camera {
     return &w.camera[e.id]
 }
 
+@(private)
 get_light_component :: proc(light: Light, e: Entity) -> ^Light {
     return &w.light[e.id]
 }
 
-get_transform_mesh_component :: proc(transform: Transform, mesh: Mesh, e: Entity) -> (^Transform, ^Mesh) {
-    return &w.transform[e.id], &w.mesh[e.id]
+@(private)
+get_transform_model_component :: proc(transform: Transform, model: Model, e: Entity) -> (^Transform, ^Model) {
+    return &w.transform[e.id], &w.model[e.id]
 }
 
+@(private)
 get_transform_camera_component :: proc(transform: Transform, camera: Camera, e: Entity) -> (^Transform, ^Camera) {
     return &w.transform[e.id], &w.camera[e.id]
 }

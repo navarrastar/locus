@@ -9,8 +9,6 @@ import "core:path/filepath"
 import "core:fmt"
 
 import "pkg:core"
-import "pkg:core/filesystem/loader"
-import "pkg:core/filesystem/loaded"
 import m "pkg:core/math"
 import "pkg:game"
 import r "pkg/core/renderer"
@@ -25,10 +23,7 @@ main :: proc() {
 		)
 	}
 
-	filepath.walk("./assets/models", load_model, nil)
-
-	ctx := context
-	core.init(&ctx)
+	core.init()
 	defer core.cleanup()
 
 	game.init()
@@ -41,15 +36,4 @@ main :: proc() {
 		core.loop()
 	}
 	
-}
-
-load_model :: proc(info: os.File_Info, in_err: os.Error, user_data: rawptr) -> (err: os.Error, skip_dir: bool) {
-	fmt.assertf(in_err == nil, "Error loading model file:", info.name)
-	
-	if info.is_dir do return
-
-	model := loader.load_gltf(info.fullpath)
-	loaded.add_model(model)
-
-	return
 }

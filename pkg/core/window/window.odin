@@ -4,120 +4,59 @@ import "core:log"
 import "base:runtime"
 import "pkg:core/event"
 import "pkg:core/input"
-import "vendor:wgpu"
-import "vendor:wgpu/glfwglue"
 
-import "vendor:glfw"
+import rl "vendor:raylib"
 
-@(private)
-window: glfw.WindowHandle
+WINDOW_WIDTH :: 800
+WINDOW_HEIGHT :: 600
 
-@(private)
-global_context: ^runtime.Context
 
-@(private)
-window_width: u32
-@(private)
-window_height: u32
 
-@(private)
-error_callback :: proc "c" (code: i32, desc: cstring) {
-    context = global_context^
-    log.error("GLFW Error: %d: %s", code, desc)
-    when ODIN_DEBUG {
-        panic("")
-    }
-}
-
-@(private)
-framebuffer_size_callback :: proc "c" (window: glfw.WindowHandle, width, height: i32) {
-    context = global_context^
-    window_width = u32(width)
-    window_height = u32(height)
-    
-    resize_event: event.Event = event.WindowResize_Event {
-        width = window_width,
-        height = window_height,
-    }
-
-    event.trigger(resize_event)
-}
-
-@(private)
-key_callback :: proc "c" (window: glfw.WindowHandle, key, scancode, action, mods: i32) {
-    context = global_context^
-    
-    if key == glfw.KEY_ESCAPE && action == glfw.PRESS {
-        glfw.SetWindowShouldClose(window, glfw.TRUE)
-    }
-
-    input_event: event.Input_Event = {
-        key = int(key),
-        action = int(action),
-    }
-
-    event.trigger(input_event)
-}
-
-init :: proc(ctx: ^runtime.Context) -> bool {
-    global_context = ctx
-
-    if !bool(glfw.Init()) {
-        log.warn("Failed to initialize GLFW")
-        return false
-    }
-
-    glfw.WindowHint(glfw.CLIENT_API, glfw.NO_API)
-
-    window_width = 800
-    window_height = 600
-    window = glfw.CreateWindow(i32(window_width), i32(window_height), "Locke", nil, nil)
-    if window == nil {
-        log.warn("Failed to create GLFW window")
-        return false
-    }
-
-    glfw.SetFramebufferSizeCallback(window, framebuffer_size_callback)
-    glfw.SetKeyCallback(window, key_callback)
-
+init :: proc() -> bool {
+    rl.SetConfigFlags({.VSYNC_HINT})
+    rl.InitWindow(WINDOW_WIDTH, WINDOW_HEIGHT, "desmond")
     return true
 }
 
 cleanup :: proc() {
-    if window != nil {
-        glfw.DestroyWindow(window)
-    }
-    glfw.Terminate()
+    rl.CloseWindow()
 }
 
 poll_events :: proc() {
-    glfw.PollEvents()
+    handle_resize()
+    handle_inputs()
+}
+
+has_resized :: proc() -> bool {
+    return rl.IsWindowResized() 
+}
+
+@(private)
+handle_resize :: proc() {
+    if !has_resized() do return
+
+    resize_event: event.Event_WindowResize = {
+        width = u32(rl.GetRenderWidth()),
+        height = u32(rl.GetRenderHeight())
+    }
+}
+ 
+handle_inputs :: proc() {  
+    for key := rl.GetKeyPressed(); int(key) != 0; key = rl.GetKeyPressed() {
+        input_event: event.Event_Input = {
+            key = int(key),
+            action = .Down
+        }
+         
+        event.trigger(input_event)
+    }
+ 
 }
 
 should_close :: proc() -> bool {
-    return bool(glfw.WindowShouldClose(window))
-}
-
-vulkan_supported :: proc() -> bool {
-    return bool(glfw.VulkanSupported())
-}
-
-get_required_extensions :: proc() -> []cstring {
-    return glfw.GetRequiredInstanceExtensions()
+    return rl.WindowShouldClose()
 }
 
 get_window_size :: proc() -> (width, height: u32) {
-    return window_width, window_height
-}
-
-get_window_handle :: proc() -> glfw.WindowHandle {
-    return window
-}
-
-get_surface :: proc(instance: wgpu.Instance) -> wgpu.Surface {
-    return glfwglue.GetSurface(instance, window)
-}
-
-get_aspect_ratio :: proc() -> f32 {
-    return f32(window_width) / f32(window_height)
+    return u32(rl.GetRenderWidth()), u32(rl.GetRenderHeight())
 }
