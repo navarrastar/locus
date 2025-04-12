@@ -8,9 +8,12 @@ import m "pkg:core/math"
 import "pkg:core/window"
 import "pkg:core/event"
 import "pkg:core/renderer"
+import "pkg:core/ui"
+
 
 
 init :: proc() {
+    ui.init()
     window.init()
     renderer.init()
     event.init()
@@ -18,7 +21,8 @@ init :: proc() {
 }
 
 loop :: proc() {
-    renderer.loop()
+    ui_commands := ui.loop()
+    renderer.loop(&ui_commands)
 }
 
 cleanup :: proc() {

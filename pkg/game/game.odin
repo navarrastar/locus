@@ -10,7 +10,6 @@ import w "pkg:core/world"
 import m "pkg:core/math"
 import r "pkg:core/renderer"
 import "pkg:core/event"
-import "pkg:core/input"
 
 
 

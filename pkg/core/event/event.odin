@@ -1,7 +1,8 @@
 package event
 
 import "core:log"
-import "pkg:core/input"
+
+
 
 manager: Manager
 

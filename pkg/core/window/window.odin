@@ -3,9 +3,9 @@ package window
 import "core:log"
 import "base:runtime"
 import "pkg:core/event"
-import "pkg:core/input"
 
 import rl "vendor:raylib"
+import "third_party:clay"
 
 WINDOW_WIDTH :: 800
 WINDOW_HEIGHT :: 600
@@ -13,7 +13,7 @@ WINDOW_HEIGHT :: 600
 
 
 init :: proc() {
-    rl.SetConfigFlags({.VSYNC_HINT})
+    rl.SetConfigFlags({.VSYNC_HINT })
     rl.InitWindow(WINDOW_WIDTH, WINDOW_HEIGHT, "desmond")
 }
 
@@ -24,6 +24,7 @@ cleanup :: proc() {
 poll_events :: proc() {
     handle_resize()
     handle_inputs()
+    handle_pointer()
 }
 
 has_resized :: proc() -> bool {
@@ -38,8 +39,11 @@ handle_resize :: proc() {
         width = u32(rl.GetRenderWidth()),
         height = u32(rl.GetRenderHeight())
     }
+
+    event.trigger(resize_event)
 }
- 
+
+@(private)
 handle_inputs :: proc() {  
     for key := rl.GetKeyPressed(); int(key) != 0; key = rl.GetKeyPressed() {
         input_event: event.Event_Input = {
@@ -48,8 +52,12 @@ handle_inputs :: proc() {
         }
          
         event.trigger(input_event)
-    }
- 
+    } 
+}
+
+@(private)
+handle_pointer :: proc() {
+    clay.SetPointerState(rl.GetMousePosition(), rl.IsMouseButtonDown(.LEFT))
 }
 
 should_close :: proc() -> bool {
