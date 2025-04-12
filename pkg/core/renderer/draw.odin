@@ -7,26 +7,25 @@ import "core:log"
 
 import rl "vendor:raylib"
 
-import "pkg:core/ecs"
+import w "pkg:core/world"
 import m "pkg:core/math"
 import "pkg:core/window"
 
 
 draw_world :: proc () {
-    ecs.for_each({ .Model }, draw_entity)
+    for entity in w.entities {
+        #partial switch variant in entity {
+            case w.Entity_Player:
+                using e := entity.(w.Entity_Player)
+                rl.DrawModel(e.model, entity.pos, entity.scale, rl.PINK)
+            
+            case w.Entity_StaticMesh:
+                using e := entity.(w.Entity_StaticMesh)
+                rl.DrawModel(e.model, entity.pos, entity.scale, rl.BLACK)
+        }
+    }
 }
 
 draw_ui :: proc () {}
 
-draw_entity :: proc (e: ecs.Entity) {
-    transform_comp, model_comp := ecs.get_components(ecs.Transform{}, ecs.Model{}, e)
-    
-    rl.DrawModel(model_comp^, transform_comp.pos, transform_comp.scale, rl.WHITE)
-
-    draw_model(model_comp)
-}
-
-draw_model :: proc(model: ^rl.Model) {
-
-}
 

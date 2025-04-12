@@ -12,10 +12,9 @@ WINDOW_HEIGHT :: 600
 
 
 
-init :: proc() -> bool {
+init :: proc() {
     rl.SetConfigFlags({.VSYNC_HINT})
     rl.InitWindow(WINDOW_WIDTH, WINDOW_HEIGHT, "desmond")
-    return true
 }
 
 cleanup :: proc() {

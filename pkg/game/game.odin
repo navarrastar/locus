@@ -3,8 +3,10 @@ package game
 import "core:log"
 import "core:os"
 
+import rl "vendor:raylib"
+
 import "pkg:core/window"
-import "pkg:core/ecs"
+import w "pkg:core/world"
 import m "pkg:core/math"
 import r "pkg:core/renderer"
 import "pkg:core/event"
@@ -21,12 +23,10 @@ cleanup :: proc() {
 }
 
 loop :: proc() {
-    update_camera()
-    update_player()
+    rl.UpdateCamera(&w.camera, .FREE)
 }
 
 default_level :: proc() {
-    spawn_camera()
     spawn_player()
 
     any_resize_handler := event.Handler {

@@ -10,8 +10,19 @@ Vec4 :: linalg.Vector4f32
 Mat4 :: linalg.Matrix4x4f32
 Quat :: linalg.Quaternionf32
 
+Transform :: struct {
+    pos: Vec3,
+    rot: Vec3,
+    scale: f32
+}
+
 IDENTITY_MAT :: linalg.MATRIX4F32_IDENTITY 
 IDENTITY_QUAT :: linalg.QUATERNIONF32_IDENTITY
+DEFAULT_TRANSFORM :: Transform{
+    pos = Vec3{0, 0, 0},
+    rot = Vec3{0, 0, 0},
+    scale = 1,
+}
 
 quat :: proc{quat_from_euler, quat_from_4f32}
 

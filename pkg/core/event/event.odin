@@ -40,12 +40,11 @@ InputAction :: enum {
     Release
 }
 
-init :: proc() -> bool {
+init :: proc() {
     manager = Manager {
         specific_handlers = make(map[Event][dynamic]Handler),
         generic_handlers = make(map[Type][dynamic]Handler),
     }
-    return true
 }
 
 cleanup :: proc() {
