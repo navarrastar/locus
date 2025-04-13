@@ -5,57 +5,41 @@ import "base:runtime"
 import "pkg:core/event"
 import "pkg:core/input"
 
-import rl "vendor:raylib"
-
-WINDOW_WIDTH :: 800
-WINDOW_HEIGHT :: 600
+import sdl "vendor:sdl3"
 
 
+window: ^sdl.Window
+global_context: ^runtime.Context
 
-init :: proc() {
-    rl.SetConfigFlags({.VSYNC_HINT})
-    rl.InitWindow(WINDOW_WIDTH, WINDOW_HEIGHT, "desmond")
+init :: proc(ctx: ^runtime.Context) {
+    global_context = ctx
+    sdl.SetLogPriorities(.VERBOSE)
+    sdl.SetLogOutputFunction(proc "c" (userdata: rawptr, category: sdl.LogCategory, priority: sdl.LogPriority, message: cstring) {
+        context = global_context^
+        log.infof("SDL {} [{}]: {}", category, priority, message)
+    }, nil)
+
+    ok := sdl.Init({ .VIDEO })
+    assert(ok, "Failed to initialize sdl3")
+
+    window = sdl.CreateWindow("desmond", 800, 600, {})
+    assert(window != nil, "Failed to create sdl3 window")
 }
 
 cleanup :: proc() {
-    rl.CloseWindow()
+    //rl.CloseWindow()
 }
 
-poll_events :: proc() {
-    handle_resize()
-    handle_inputs()
-}
-
-has_resized :: proc() -> bool {
-    return rl.IsWindowResized() 
-}
-
-@(private)
-handle_resize :: proc() {
-    if !has_resized() do return
-
-    resize_event: event.Event_WindowResize = {
-        width = u32(rl.GetRenderWidth()),
-        height = u32(rl.GetRenderHeight())
-    }
-}
- 
-handle_inputs :: proc() {  
-    for key := rl.GetKeyPressed(); int(key) != 0; key = rl.GetKeyPressed() {
-        input_event: event.Event_Input = {
-            key = int(key),
-            action = .Down
+poll_events :: proc() -> (should_close: bool){
+    event: sdl.Event
+    for sdl.PollEvent(&event) {
+        #partial switch event.type {
+            case .QUIT:
+                return true
+            case .KEY_DOWN:
+                if event.key.scancode == .ESCAPE do return true
         }
-         
-        event.trigger(input_event)
+
     }
- 
-}
-
-should_close :: proc() -> bool {
-    return rl.WindowShouldClose()
-}
-
-get_window_size :: proc() -> (width, height: u32) {
-    return u32(rl.GetRenderWidth()), u32(rl.GetRenderHeight())
+    return false
 }

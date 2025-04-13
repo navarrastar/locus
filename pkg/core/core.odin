@@ -10,8 +10,8 @@ import "pkg:core/event"
 import "pkg:core/renderer"
 
 
-init :: proc() {
-    window.init()
+init :: proc(ctx: ^runtime.Context) {
+    window.init(ctx)
     renderer.init()
     event.init()
     world.init()

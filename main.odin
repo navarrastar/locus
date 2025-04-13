@@ -23,14 +23,14 @@ main :: proc() {
 		)
 	}
 
-	core.init()
+	ctx := context
+	core.init(&ctx)
 	defer core.cleanup()
 
 	game.init()
 	defer game.cleanup()
 
-	for !window.should_close() {
-		window.poll_events()
+	for !window.poll_events() {
 		
 		game.loop()
 		core.loop()

@@ -3,8 +3,6 @@ package game
 import "core:log"
 import "core:os"
 
-import rl "vendor:raylib"
-
 import "pkg:core/window"
 import w "pkg:core/world"
 import m "pkg:core/math"
@@ -23,7 +21,6 @@ cleanup :: proc() {
 }
 
 loop :: proc() {
-    rl.UpdateCamera(&w.camera, .FREE)
 }
 
 default_level :: proc() {
