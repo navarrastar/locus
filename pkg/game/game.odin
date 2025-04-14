@@ -29,7 +29,7 @@ update :: proc() -> ^World {
 default_level :: proc() {
     player := Entity_Player {
         name = "player",
-        transform = m.DEFAULT_TRANSFORM,
+        transform = { pos = {0, 0, -2}, rot = {0, 0, 0}, scale = 1 },
         geometry = geo.triangle({0.0, 0.5, -1.0}, {0.5, 0.0, -1.0}, {-0.5, 0.0, -1.0}, {0, 145, 130, 255})
     }
     spawn(player)

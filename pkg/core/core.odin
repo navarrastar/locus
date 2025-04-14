@@ -45,24 +45,23 @@ cleanup :: proc() {
     free(render_data)
 }
 
-create_render_data :: proc(world: ^game.World) -> ^renderer.RenderData {
-    active_camera := world.cameras[0]
+create_render_data :: proc(using world: ^game.World) -> ^renderer.RenderData {
+    active_camera := cameras[0]
     assert(active_camera.fovy != 0, "cameras[0].fovy can't be 0")
 
     proj := m.perspective(active_camera.fovy, f32(window.width / window.height), NEAR_PLANE, FAR_PLANE)
 
     ROTATION_SPEED := m.to_radians(f32(90))
-    @(static) rotation: f32
-    rotation += ROTATION_SPEED * window.dt
+    player.rot.y += ROTATION_SPEED * window.dt
 
-    model_mat := m.matrix_rotate(rotation, {0, 1, 0})
-
-    render_data.view_proj = proj * model_mat
 
     // Getting geometries
     geometries: [1024]^geo.Geometry
 
-    geometries[0] = &world.player.geometry
+    geometries[0] = &player.geometry
+
+    model_mat := m.to_matrix(player.pos, m.quat_from_euler(player.rot), player.scale)
+    render_data.view_proj = proj * model_mat
 
     geometry_count := 1
     for &opponent in world.opponents {
