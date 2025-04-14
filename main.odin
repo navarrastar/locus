@@ -27,13 +27,12 @@ main :: proc() {
 	core.init(&ctx)
 	defer core.cleanup()
 
-	game.init()
+	world := game.init()
 	defer game.cleanup()
 
-	for !window.poll_events() {
-		
-		game.loop()
-		core.loop()
+	for window.poll_events() {
+		world = game.update()
+		core.update(world)
 	}
 	
 }
