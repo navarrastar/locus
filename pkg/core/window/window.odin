@@ -12,6 +12,7 @@ window: ^sdl.Window
 global_context: ^runtime.Context
 
 width, height: i32
+dt: f32
 
 init :: proc(ctx: ^runtime.Context) {
     global_context = ctx
@@ -38,6 +39,11 @@ cleanup :: proc() {
 }
 
 poll_events :: proc() -> (window_open: bool){
+    @(static) old_tick: u64
+    new_tick := sdl.GetTicks()
+    dt = f32(new_tick - old_tick) / 1000
+    old_tick = new_tick 
+
     event: sdl.Event
     for sdl.PollEvent(&event) {
         #partial switch event.type {
@@ -50,10 +56,8 @@ poll_events :: proc() -> (window_open: bool){
     }
 
     sdl.GetWindowSize(window, &width, &height)
+    
 
     return true
 }
 
-size :: proc() -> (w: i32, h: i32) {
-    return width, height
-}

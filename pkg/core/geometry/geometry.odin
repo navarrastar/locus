@@ -1,5 +1,6 @@
 package geometry
 
+import m "pkg:core/math"
 
 Geometry :: union {
     Mesh,
@@ -14,7 +15,8 @@ Geometry :: union {
 }
 
 Mesh :: struct {
-
+    using transform: m.Transform,
+    model_matrix: m.Mat4
 }
 
 Triangle :: struct {

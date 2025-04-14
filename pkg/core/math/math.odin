@@ -106,3 +106,9 @@ to_matrix :: proc(pos: Vec3, rot: Quat, scale: f32) -> Mat4 {
 mvp :: proc(pos: Vec3, rot: Quat, scale: f32, view: Mat4, proj: Mat4) -> Mat4 {
     return linalg.matrix_mul(view, linalg.matrix_mul(proj, to_matrix(pos, rot, scale)))
 }
+
+@(require_results)
+matrix_rotate :: proc(angle_radians: f32, v: Vec3) -> Mat4 {
+    return linalg.matrix4_rotate_f32(angle_radians, v)
+}
+

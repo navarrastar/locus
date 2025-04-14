@@ -27,7 +27,8 @@ pipeline: ^sdl.GPUGraphicsPipeline
 swapchain_texture: ^sdl.GPUTexture
 
 RenderData :: struct {
-    projection_matrix: m.Mat4,
+    view_proj:  m.Mat4,
+    model_mat:  m.Mat4,
 
     meshes:     []geo.Mesh,
     triangles:  []geo.Triangle,
@@ -86,7 +87,7 @@ update :: proc(using rd: ^RenderData) {
 
     sdl.BindGPUGraphicsPipeline(render_pass, pipeline)
 
-    sdl.PushGPUVertexUniformData(cmd_buffer, 0, &projection_matrix, size_of(projection_matrix))
+    sdl.PushGPUVertexUniformData(cmd_buffer, 0, &view_proj, size_of(view_proj))
 
     sdl.DrawGPUPrimitives(render_pass, 3, 1, 0, 0)
     // rl.ClearBackground({ 74, 45, 83, 100 })
