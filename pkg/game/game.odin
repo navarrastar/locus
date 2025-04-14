@@ -7,6 +7,7 @@ import "pkg:core/window"
 import m "pkg:core/math"
 import "pkg:core/event"
 import "pkg:core/input"
+import geo "pkg:core/geometry"
 
 
 
@@ -28,7 +29,8 @@ update :: proc() -> ^World {
 default_level :: proc() {
     player := Entity_Player {
         name = "player",
-        transform = m.DEFAULT_TRANSFORM
+        transform = m.DEFAULT_TRANSFORM,
+        geometry = geo.triangle({0.0, 0.5, -1.0}, {0.5, 0.0, -1.0}, {-0.5, 0.0, -1.0}, {0, 145, 130, 255})
     }
     spawn(player)
 

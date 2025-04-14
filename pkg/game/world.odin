@@ -5,18 +5,18 @@ import "core:strings"
 import "core:fmt"
 
 import m "pkg:core/math"
+import geo "pkg:core/geometry"
 
 
 world: ^World
 
 World :: struct {
     player:             Entity_Player,
-    opponents:      [10]Entity_Opponent,
-    cameras:        [10]Entity_Camera,
-    static_meshes: [100]Entity_StaticMesh
+    opponents:      [16]Entity_Opponent,
+    cameras:        [16]Entity_Camera,
+    static_meshes: [128]Entity_StaticMesh,
 }
 
 spawn :: proc { 
     spawn_player,
-    spawn_camera
-}
+    spawn_camera }

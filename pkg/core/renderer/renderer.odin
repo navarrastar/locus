@@ -25,20 +25,21 @@ when ODIN_OS == .Windows {
 gpu: ^sdl.GPUDevice
 pipeline: ^sdl.GPUGraphicsPipeline
 swapchain_texture: ^sdl.GPUTexture
+render_pass: ^sdl.GPURenderPass
 
 RenderData :: struct {
     view_proj:  m.Mat4,
     model_mat:  m.Mat4,
 
-    meshes:     []geo.Mesh,
-    triangles:  []geo.Triangle,
-    pyramids:   []geo.Pyramid,
-    rectangles: []geo.Rectangle,
-    cubes:      []geo.Cube,
-    circles:    []geo.Circle,
-    spheres:    []geo.Sphere,
-    capsules:   []geo.Capsule,
-    cylinders:  []geo.Cylinder
+    meshes:     [dynamic]geo.Mesh,
+    triangles:  [dynamic]geo.Triangle,
+    pyramids:   [dynamic]geo.Pyramid,
+    rectangles: [dynamic]geo.Rectangle,
+    cubes:      [dynamic]geo.Cube,
+    circles:    [dynamic]geo.Circle,
+    spheres:    [dynamic]geo.Sphere,
+    capsules:   [dynamic]geo.Capsule,
+    cylinders:  [dynamic]geo.Cylinder
 }
 
 init :: proc() {
@@ -55,6 +56,20 @@ init :: proc() {
         vertex_shader = vert_shader,
         fragment_shader = frag_shader,
         primitive_type = .TRIANGLELIST,
+        vertex_input_state = {
+            num_vertex_buffers = 1,
+            vertex_buffer_descriptions = &(sdl.GPUVertexBufferDescription {
+                slot = 0,
+                pitch = size_of(m.Vec3)
+            }),
+            num_vertex_attributes = 1,
+            vertex_attributes = &(sdl.GPUVertexAttribute {
+                location = 0,
+                format = .FLOAT3,
+                offset = 0
+            })
+            
+        },
         target_info = {
             num_color_targets = 1,
             color_target_descriptions = &(sdl.GPUColorTargetDescription {
@@ -83,13 +98,13 @@ update :: proc(using rd: ^RenderData) {
         clear_color = { 0.2, 0.2, 0.4, 1.0 },
         store_op = .STORE
     }
-    render_pass := sdl.BeginGPURenderPass(cmd_buffer, &color_target, 1, nil)
+    render_pass = sdl.BeginGPURenderPass(cmd_buffer, &color_target, 1, nil)
+
 
     sdl.BindGPUGraphicsPipeline(render_pass, pipeline)
 
     sdl.PushGPUVertexUniformData(cmd_buffer, 0, &view_proj, size_of(view_proj))
 
-    sdl.DrawGPUPrimitives(render_pass, 3, 1, 0, 0)
     // rl.ClearBackground({ 74, 45, 83, 100 })
     // rl.BeginDrawing()
 
