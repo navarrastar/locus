@@ -38,7 +38,7 @@ default_level :: proc() {
         name = "camera",
         transform = m.DEFAULT_TRANSFORM,
         up = { 0.0, 1.0, 0.0 },
-        fovy = 103,
+        fovy = 90,
         projection = .Perspective
     }
     spawn(camera, 0)
