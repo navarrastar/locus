@@ -17,6 +17,4 @@ World :: struct {
     static_meshes: [128]Entity_StaticMesh,
 }
 
-spawn :: proc { 
-    spawn_player,
-    spawn_camera }
+spawn :: proc { spawn_player, spawn_camera }

@@ -19,15 +19,16 @@ render_data: ^renderer.RenderData
 
 init :: proc(ctx: ^runtime.Context) {
     render_data = new(renderer.RenderData)
-    render_data.meshes = make([dynamic]geo.Mesh)
-    render_data.triangles = make([dynamic]geo.Triangle)
-    render_data.pyramids = make([dynamic]geo.Pyramid)
+    render_data.meshes     = make([dynamic]geo.Mesh)
+    render_data.triangles  = make([dynamic]geo.Triangle)
+    render_data.pyramids   = make([dynamic]geo.Pyramid)
     render_data.rectangles = make([dynamic]geo.Rectangle)
-    render_data.cubes = make([dynamic]geo.Cube)
-    render_data.circles = make([dynamic]geo.Circle)
-    render_data.spheres = make([dynamic]geo.Sphere)
-    render_data.capsules = make([dynamic]geo.Capsule)
-    render_data.cylinders = make([dynamic]geo.Cylinder)
+    render_data.cubes      = make([dynamic]geo.Cube)
+    render_data.circles    = make([dynamic]geo.Circle)
+    render_data.spheres    = make([dynamic]geo.Sphere)
+    render_data.capsules   = make([dynamic]geo.Capsule)
+    render_data.cylinders  = make([dynamic]geo.Cylinder)
+    
     window.init(ctx)
     renderer.init()
     event.init()
@@ -60,7 +61,8 @@ create_render_data :: proc(using world: ^game.World) -> ^renderer.RenderData {
 
     geometries[0] = &player.geometry
 
-    model_mat := m.to_matrix(player.pos, m.quat_from_euler(player.rot), player.scale)
+    model_mat := m.to_matrix(player.pos, player.rot, player.scale)
+
     render_data.view_proj = proj * model_mat
 
     geometry_count := 1

@@ -23,7 +23,6 @@ when ODIN_OS == .Windows {
 
 
 gpu: ^sdl.GPUDevice
-pipeline: ^sdl.GPUGraphicsPipeline
 swapchain_texture: ^sdl.GPUTexture
 render_pass: ^sdl.GPURenderPass
 
@@ -48,41 +47,7 @@ init :: proc() {
 
     assert(sdl.ClaimWindowForGPUDevice(gpu, window.window), "GPU failed to claim window")
 
-    vert_shader := load_shader(shader_code_vert, .VERTEX, 1)
-    frag_shader := load_shader(shader_code_frag, .FRAGMENT, 0)
-    assert(vert_shader != nil && frag_shader != nil, "Failed to load shaders")
-
-    pipeline_desc := sdl.GPUGraphicsPipelineCreateInfo {
-        vertex_shader = vert_shader,
-        fragment_shader = frag_shader,
-        primitive_type = .TRIANGLELIST,
-        vertex_input_state = {
-            num_vertex_buffers = 1,
-            vertex_buffer_descriptions = &(sdl.GPUVertexBufferDescription {
-                slot = 0,
-                pitch = size_of(m.Vec3)
-            }),
-            num_vertex_attributes = 1,
-            vertex_attributes = &(sdl.GPUVertexAttribute {
-                location = 0,
-                format = .FLOAT3,
-                offset = 0
-            })
-            
-        },
-        target_info = {
-            num_color_targets = 1,
-            color_target_descriptions = &(sdl.GPUColorTargetDescription {
-                format = sdl.GetGPUSwapchainTextureFormat(gpu, window.window) 
-            })
-        }
-    }
-    pipeline = sdl.CreateGPUGraphicsPipeline(gpu, pipeline_desc)
-    assert(pipeline != nil, "Failed to create pipeline")
-
-    sdl.ReleaseGPUShader(gpu, vert_shader)
-    sdl.ReleaseGPUShader(gpu, frag_shader)
-    
+    create_pipelines()
 }
 
 update :: proc(using rd: ^RenderData) {
@@ -99,9 +64,6 @@ update :: proc(using rd: ^RenderData) {
         store_op = .STORE
     }
     render_pass = sdl.BeginGPURenderPass(cmd_buffer, &color_target, 1, nil)
-
-
-    sdl.BindGPUGraphicsPipeline(render_pass, pipeline)
 
     sdl.PushGPUVertexUniformData(cmd_buffer, 0, &view_proj, size_of(view_proj))
 

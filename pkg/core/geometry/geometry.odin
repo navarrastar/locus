@@ -1,5 +1,7 @@
 package geometry
 
+import sdl "vendor:sdl3"
+
 import m "pkg:core/math"
 
 Geometry :: union {
@@ -23,8 +25,7 @@ Triangle :: struct {
     using transform: m.Transform,
     model_matrix: m.Mat4,
 
-    vertices: [3]m.Vec3,
-    color: [4]u8
+    vertices: [3]TriangleVertex,
 }
 
 Pyramid :: struct {
@@ -55,9 +56,33 @@ Cylinder :: struct {
 
 }
 
-triangle :: proc(v1, v2, v3: m.Vec3, color: [4]u8) -> Triangle {
+TriangleVertex :: struct {
+    pos: m.Vec3,
+    color: m.Vec4
+}
+
+triangle_attributes :: proc() -> [2]sdl.GPUVertexAttribute {
+    return {
+        sdl.GPUVertexAttribute {
+            location = 0,
+            format = .FLOAT3, 
+            offset = u32(offset_of(TriangleVertex, pos))
+        },
+        sdl.GPUVertexAttribute {
+            location = 1,
+            format = .FLOAT4,
+            offset = u32(offset_of(TriangleVertex, color)),
+        }
+    }
+}
+
+
+triangle :: proc(v1, v2, v3: m.Vec3, color: m.Vec4) -> Triangle {
     return Triangle {
-        vertices = {v1, v2, v3},
-        color = color,
+        vertices = { 
+            { pos = v1, color = color },
+            { pos = v2, color = color },
+            { pos = v3, color = color },
+        }
     }
 }

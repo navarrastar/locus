@@ -93,17 +93,18 @@ to_degrees :: proc(radians: f32) -> f32 {
 }
 
 @(require_results)
-to_matrix :: proc(pos: Vec3, rot: Quat, scale: f32) -> Mat4 {
-
+to_matrix :: proc(pos: Vec3, rot: Vec3, scale: f32) -> Mat4 {
+    quaternion := quat_from_euler(rot)
+    
     translation := linalg.matrix4_translate_f32(pos)
-    rotation := linalg.matrix4_from_quaternion_f32(rot)
+    rotation := linalg.matrix4_from_quaternion_f32(quaternion)
     scaling := linalg.matrix4_scale_f32(Vec3{scale, scale, scale})
 
     return linalg.matrix_mul(translation, linalg.matrix_mul(rotation, scaling))
 }
 
 @(require_results)
-mvp :: proc(pos: Vec3, rot: Quat, scale: f32, view: Mat4, proj: Mat4) -> Mat4 {
+mvp :: proc(pos: Vec3, rot: Vec3, scale: f32, view: Mat4, proj: Mat4) -> Mat4 {
     return linalg.matrix_mul(view, linalg.matrix_mul(proj, to_matrix(pos, rot, scale)))
 }
 

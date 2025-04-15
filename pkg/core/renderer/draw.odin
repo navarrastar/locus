@@ -15,6 +15,7 @@ import geo "pkg:core/geometry"
 
 
 draw_render_data :: proc (using rd: ^RenderData) {
+    assert(render_pass != nil, "Tried to draw but render_pass is nil")
     for mesh in  meshes {
         draw(mesh)
     }
@@ -61,18 +62,19 @@ draw_mesh :: proc(geo.Mesh) {
 }
 
 draw_triangle :: proc(triangle: ^geo.Triangle) {
+
     vertex_buffer := sdl.CreateGPUBuffer(gpu, {
         usage = { .VERTEX },
-        size = size_of(m.Vec3) * 3
+        size = size_of(geo.TriangleVertex) * 3
     })
 
     transfer_buffer := sdl.CreateGPUTransferBuffer(gpu, {
         usage = .UPLOAD,
-        size = size_of(m.Vec3) * 3
+        size = size_of(geo.TriangleVertex) * 3
     })
 
     transfer_mem :=  sdl.MapGPUTransferBuffer(gpu, transfer_buffer, false)
-    mem.copy(transfer_mem, &triangle.vertices, size_of(m.Vec3) * 3)
+    mem.copy(transfer_mem, &triangle.vertices, size_of(geo.TriangleVertex) * 3)
     sdl.UnmapGPUTransferBuffer(gpu, transfer_buffer)
 
     copy_cmd_buf := sdl.AcquireGPUCommandBuffer(gpu)
@@ -81,12 +83,17 @@ draw_triangle :: proc(triangle: ^geo.Triangle) {
 
     sdl.UploadToGPUBuffer(copy_pass,
         {transfer_buffer = transfer_buffer},
-        {buffer = vertex_buffer, size = size_of(m.Vec3) * 3}, 
+        {buffer = vertex_buffer, size = size_of(geo.TriangleVertex) * 3}, 
          false)
 
     sdl.EndGPUCopyPass(copy_pass)
 
+    sdl.ReleaseGPUTransferBuffer(gpu, transfer_buffer)
+
     ok := sdl.SubmitGPUCommandBuffer(copy_cmd_buf)
+
+    assert(pipelines[.Triangle] != nil)
+    sdl.BindGPUGraphicsPipeline(render_pass, pipelines[.Triangle])
 
     sdl.BindGPUVertexBuffers(render_pass, 0, &sdl.GPUBufferBinding{ buffer = vertex_buffer }, 1)
 
