@@ -4,11 +4,7 @@ import "core:log"
 import "core:strings"
 import "core:fmt"
 
-import m "pkg:core/math"
-import geo "pkg:core/geometry"
-
-
-world: ^World
+import m "pkg:math"
 
 World :: struct {
     player:             Entity_Player,
@@ -17,4 +13,12 @@ World :: struct {
     static_meshes: [128]Entity_StaticMesh,
 }
 
-spawn :: proc { spawn_player, spawn_camera }
+world_spawn :: proc { spawn_player, spawn_camera, spawn_static_mesh }
+
+spawn_static_mesh :: proc(mesh: Entity_StaticMesh) {
+    @static mesh_count := 0
+
+    world.static_meshes[mesh_count] = mesh 
+
+    mesh_count += 1
+}

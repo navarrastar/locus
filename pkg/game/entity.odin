@@ -3,14 +3,12 @@ package game
 import "core:log"
 import "core:fmt"
 
-import m "pkg:core/math"
-import geo "pkg:core/geometry"
-
+import m "pkg:math"
 
 Entity :: struct {
     using transform: m.Transform,
     name: string,
-    geometry: geo.Geometry
+    geometry: Geometry
 }
 
 Entity_Player :: struct {
@@ -24,6 +22,7 @@ Entity_StaticMesh :: struct {
 
 Entity_Camera :: struct {
     using entity: Entity,
+    target: m.Vec3,
     up: m.Vec3,
     fovy: f32,
     projection: enum { Perspective, Orthographic }

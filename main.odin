@@ -1,19 +1,15 @@
 package main
 
+import "core:fmt"
 import "core:log"
 import "core:math/linalg"
-import "core:slice"
-import "core:time"
 import "core:os"
 import "core:path/filepath"
-import "core:fmt"
+import "core:slice"
+import "core:time"
 
-import "pkg:core"
-import m "pkg:core/math"
+import m "pkg:math"
 import "pkg:game"
-import r "pkg/core/renderer"
-import "pkg:core/window"
-
 
 
 main :: proc() {
@@ -23,16 +19,11 @@ main :: proc() {
 		)
 	}
 
-	ctx := context
-	core.init(&ctx)
-	defer core.cleanup()
-
-	world := game.init()
+	game.init()
 	defer game.cleanup()
 
-	for window.poll_events() {
-		world = game.update()
-		core.update(world)
+	for !game.should_shutdown() {
+		game.update()
 	}
-	
+
 }
