@@ -23,7 +23,9 @@ init :: proc() {
 update :: proc() {
     window_poll_events()
     
-    player_update()
+    if .None in ui_state.visible_panels {
+        player_update()
+    }
     
     renderer_begin_cmd_buffer()
     
@@ -46,17 +48,23 @@ should_shutdown :: proc() -> bool {
 game_default_level :: proc() {
     player := Entity_Player {
         name = "player",
-        transform = m.DEFAULT_TRANSFORM,
+        transform = { pos = {-3, 2, -1}, rot = {0, 0, 0}, scale = 1 },
         geometry = triangle()
     }
     world_spawn(player)
-
     random_rectangle := Entity_StaticMesh {
-        name = "random_rect",
-        transform = m.DEFAULT_TRANSFORM,
-        geometry = rectangle()
-    }
+            name = "random_rect",
+            transform = { pos = {3, 2, -1}, rot = {0, 0, 0}, scale = 1 },
+            geometry = rectangle()
+        }
     world_spawn(random_rectangle)
+    
+    grid := Entity_StaticMesh {
+        name = "grid",
+        transform = m.DEFAULT_TRANSFORM,
+        geometry = grid()
+    }
+    world_spawn(grid)
     
     random_triangle_2 := Entity_StaticMesh {
         name = "random_triangle_2",
@@ -67,7 +75,7 @@ game_default_level :: proc() {
 
     random_triangle := Entity_StaticMesh {
         name = "random_triangle",
-        transform = { pos = {0, -2, -10}, rot = {0, 0, 0}, scale = 1 },
+        transform = { pos = {3, 4, -10}, rot = {0, 0, 0}, scale = 1 },
         geometry = triangle({0, -1, -1}, {1, 0, -1}, {0.5, 1, -1}, {0, 0, 1, 1})
     }
     world_spawn(random_triangle)
@@ -75,7 +83,7 @@ game_default_level :: proc() {
     camera := Entity_Camera {
         name = "camera",
         target = {0, 0, -5},
-        transform = { pos = {0, 0, 2}, rot = {0, 0, 0}, scale = 1 },
+        transform = { pos = {0, 1, 2}, rot = {0, 0, 0}, scale = 1 },
         up = { 0.0, 1.0, 0.0 },
         fovy = 90,
         projection = .Perspective
