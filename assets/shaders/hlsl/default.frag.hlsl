@@ -1,26 +1,8 @@
-static float4 out_color;
-static float4 in_color;
-
-struct SPIRV_Cross_Input
-{
-    float4 in_color : TEXCOORD0;
+struct Input {
+    float4 position : SV_Position;
+    float4 color : TEXCOORD1;
 };
 
-struct SPIRV_Cross_Output
-{
-    float4 out_color : SV_Target0;
-};
-
-void main_inner()
-{
-    out_color = in_color;
-}
-
-SPIRV_Cross_Output main(SPIRV_Cross_Input stage_input)
-{
-    in_color = stage_input.in_color;
-    main_inner();
-    SPIRV_Cross_Output stage_output;
-    stage_output.out_color = out_color;
-    return stage_output;
+float4 main(Input input) : SV_Target0 {
+    return input.color;
 }

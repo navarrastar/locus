@@ -7,10 +7,9 @@ struct PS_INPUT
 {
     float4 Position;
     float4 Color;
-    float3 WorldPos;
 };
 
-constant float4 _35 = {};
+constant float4 _17 = {};
 
 struct main0_out
 {
@@ -20,28 +19,14 @@ struct main0_out
 struct main0_in
 {
     float4 in_var_COLOR [[user(locn0)]];
-    float3 in_var_TEXCOORD0 [[user(locn1)]];
 };
 
 fragment main0_out main0(main0_in in [[stage_in]], float4 gl_FragCoord [[position]])
 {
     main0_out out = {};
-    float4 _38 = in.in_var_COLOR;
-    float3 _37 = in.in_var_TEXCOORD0;
-    float _39 = 1.0;
-    float _40 = 0.0199999995529651641845703125;
-    float2 _41 = in.in_var_TEXCOORD0.xz;
-    float2 _53 = fract(in.in_var_TEXCOORD0.xz);
-    float2 _42 = _53;
-    float2 _56 = precise::min(_53, float2(1.0) - _53) * 1.0;
-    float2 _43 = _56;
-    float2 _44 = step(_56, float2(0.0199999995529651641845703125));
-    float _62 = precise::max(_44.x, _44.y);
-    float _45 = _62;
-    float4 _46 = in.in_var_COLOR;
-    _46.w = mix(0.20000000298023223876953125, 1.0, _62);
-    float4 _47 = _46;
-    out.out_var_SV_TARGET = _46;
+    float4 _19 = in.in_var_COLOR;
+    float4 _20 = in.in_var_COLOR;
+    out.out_var_SV_TARGET = in.in_var_COLOR;
     return out;
 }
 

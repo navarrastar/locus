@@ -3,15 +3,13 @@
 
 using namespace metal;
 
-struct SPIRV_Cross_Input
+struct Input
 {
-    float4 in_color;
+    float4 position;
+    float4 color;
 };
 
-struct SPIRV_Cross_Output
-{
-    float4 out_color;
-};
+constant float4 _17 = {};
 
 struct main0_out
 {
@@ -20,20 +18,15 @@ struct main0_out
 
 struct main0_in
 {
-    float4 in_var_TEXCOORD0 [[user(locn0)]];
+    float4 in_var_TEXCOORD1 [[user(locn0)]];
 };
 
-fragment main0_out main0(main0_in in [[stage_in]])
+fragment main0_out main0(main0_in in [[stage_in]], float4 gl_FragCoord [[position]])
 {
     main0_out out = {};
-    float4 out_color = float4(0.0);
-    float4 in_color = float4(0.0);
-    float4 _23 = in.in_var_TEXCOORD0;
-    in_color = in.in_var_TEXCOORD0;
-    out_color = in.in_var_TEXCOORD0;
-    float4 _25 = in.in_var_TEXCOORD0;
-    float4 _24 = in.in_var_TEXCOORD0;
-    out.out_var_SV_Target0 = in.in_var_TEXCOORD0;
+    float4 _19 = in.in_var_TEXCOORD1;
+    float4 _20 = in.in_var_TEXCOORD1;
+    out.out_var_SV_Target0 = in.in_var_TEXCOORD1;
     return out;
 }
 

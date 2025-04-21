@@ -5,19 +5,19 @@ using namespace metal;
 
 struct type_UBO
 {
-    float4x4 _19_mvp;
+    float4x4 mvp;
 };
 
-struct SPIRV_Cross_Input
+struct Input
 {
-    float3 in_position;
-    float4 in_color;
+    float3 position;
+    float4 color;
 };
 
-struct SPIRV_Cross_Output
+struct Output
 {
-    float4 out_color;
-    float4 _RESERVED_IDENTIFIER_FIXUP_gl_Position;
+    float4 position;
+    float4 color;
 };
 
 struct main0_out
@@ -35,23 +35,15 @@ struct main0_in
 vertex main0_out main0(main0_in in [[stage_in]], constant type_UBO& UBO [[buffer(0)]])
 {
     main0_out out = {};
-    float4 _RESERVED_IDENTIFIER_FIXUP_gl_Position = float4(0.0);
-    float3 in_position = float3(0.0);
-    float4 out_color = float4(0.0);
-    float4 in_color = float4(0.0);
-    float3 _40 = in.in_var_TEXCOORD0;
-    float4 _39 = in.in_var_TEXCOORD1;
-    in_position = in.in_var_TEXCOORD0;
-    in_color = in.in_var_TEXCOORD1;
-    float4 _54 = UBO._19_mvp * float4(in.in_var_TEXCOORD0, 1.0);
-    _RESERVED_IDENTIFIER_FIXUP_gl_Position = _54;
-    out_color = in.in_var_TEXCOORD1;
-    float4 _43 = _54;
-    float4 _44 = in.in_var_TEXCOORD1;
-    float4 _42 = in.in_var_TEXCOORD1;
-    float4 _41 = _54;
+    float3 _32 = in.in_var_TEXCOORD0;
+    float4 _31 = in.in_var_TEXCOORD1;
+    float4 _46 = UBO.mvp * float4(in.in_var_TEXCOORD0, 1.0);
+    float4 _36 = _46;
+    float4 _35 = in.in_var_TEXCOORD1;
+    float4 _34 = _46;
+    float4 _33 = in.in_var_TEXCOORD1;
+    out.gl_Position = _46;
     out.out_var_TEXCOORD0 = in.in_var_TEXCOORD1;
-    out.gl_Position = _54;
     return out;
 }
 
