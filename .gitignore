@@ -1,7 +1,6 @@
-Locke
-Locke.dSYM/
+desmond
+*.dSYM/
 .env
 .DS_Store
 .vscode/
 .zed
-src.bin
