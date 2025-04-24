@@ -24,7 +24,7 @@ pipeline_default_create :: proc() {
         log.error("Failed to load default shaders")
         return
     }
-    attributes := ATTRIBUTES_POS_COLOR
+    attributes := ATTRIBUTES_POS_COLOR_NORMAL
     pipeline_desc := sdl.GPUGraphicsPipelineCreateInfo {
         vertex_shader = vert_shader,
         fragment_shader = frag_shader,

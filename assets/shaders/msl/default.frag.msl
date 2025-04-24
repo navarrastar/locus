@@ -7,9 +7,10 @@ struct Input
 {
     float4 position;
     float4 color;
+    float3 normal;
 };
 
-constant float4 _17 = {};
+constant float4 _32 = {};
 
 struct main0_out
 {
@@ -18,15 +19,19 @@ struct main0_out
 
 struct main0_in
 {
-    float4 in_var_TEXCOORD1 [[user(locn0)]];
+    float4 in_var_TEXCOORD0 [[user(locn0)]];
+    float3 in_var_TEXCOORD1 [[user(locn1)]];
 };
 
 fragment main0_out main0(main0_in in [[stage_in]], float4 gl_FragCoord [[position]])
 {
     main0_out out = {};
-    float4 _19 = in.in_var_TEXCOORD1;
-    float4 _20 = in.in_var_TEXCOORD1;
-    out.out_var_SV_Target0 = in.in_var_TEXCOORD1;
+    float3 lightPos = float3(0.0, 0.699999988079071044921875, -0.20000000298023223876953125);
+    float4 lightColor = float4(1.0, 0.699999988079071044921875, 0.20000000298023223876953125, 1.0);
+    float3 _34 = in.in_var_TEXCOORD1;
+    float4 _43 = float4(in.in_var_TEXCOORD1, 1.0);
+    float4 _35 = _43;
+    out.out_var_SV_Target0 = _43;
     return out;
 }
 

@@ -77,12 +77,12 @@ game_default_level :: proc() {
     }
     world_spawn(random_rectangle)
     
-    grid := Entity_StaticMesh {
-        name = "grid",
-        transform = m.DEFAULT_TRANSFORM,
-        geometry = grid(color = {0.4, 0.84, 0.9, 1})
-    }
-    world_spawn(grid)
+    // grid := Entity_StaticMesh {
+    //     name = "grid",
+    //     transform = m.DEFAULT_TRANSFORM,
+    //     geometry = grid(color = {0.4, 0.84, 0.9, 1})
+    // }
+    // world_spawn(grid)
     
     random_triangle_2 := Entity_StaticMesh {
         name = "random_triangle_2",

@@ -1,5 +1,7 @@
 package game
 
+import "core:strings"
+
 import sdl "vendor:sdl3"
 
 import im "shared:imgui"
@@ -69,25 +71,25 @@ ui_toggle_visibility :: proc(panel: UIPanelSet) {
 
 ui_show_general_panel :: proc() {
     if im.Begin("General") {
-        // if im.CollapsingHeader("Entities") {
-        //     if im.CollapsingHeader("Camera"){
-        //         im.DragFloat3("Position", &world.cameras[0].pos)
-        //         im.DragFloat3("Target", &world.cameras[0].target)
-        //     }
-        //     if im.CollapsingHeader("Player"){
-        //         im.DragFloat3("Position", &world.player.pos)
-        //         im.DragFloat3("Rotation", &world.player.rot)
-        //     }
-        //     if im.CollapsingHeader("Static Meshes") {
-        //         for &mesh in world.static_meshes {
-        //             if mesh.name == "" do continue
-        //             if im.CollapsingHeader(strings.clone_to_cstring(mesh.name, context.temp_allocator)) {
-        //                 im.DragFloat3("Position", &mesh.pos)
-        //                 im.DragFloat3("Rotation", &mesh.rot)
-        //             }
-        //         }
-        //     }
-        // }
+        if im.CollapsingHeader("Entities") {
+            if im.CollapsingHeader("Camera"){
+                im.DragFloat3("Position", &world.cameras[0].pos)
+                im.DragFloat3("Target", &world.cameras[0].target)
+            }
+            if im.CollapsingHeader("Player"){
+                im.DragFloat3("Position", &world.player.pos)
+                im.DragFloat3("Rotation", &world.player.rot)
+            }
+            if im.CollapsingHeader("Static Meshes") {
+                for &mesh in world.static_meshes {
+                    if mesh.name == "" do continue
+                    if im.CollapsingHeader(strings.clone_to_cstring(mesh.name, context.temp_allocator)) {
+                        im.DragFloat3("Position", &mesh.pos)
+                        im.DragFloat3("Rotation", &mesh.rot)
+                    }
+                }
+            }
+        }
     }
     
     im.End()

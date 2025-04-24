@@ -18,7 +18,6 @@ RenderState :: struct {
 	swapchain_texture: ^sdl.GPUTexture,
 	depth_texture:     ^sdl.GPUTexture,
 	cmd_buffer:        ^sdl.GPUCommandBuffer,
-	view_proj:         m.Mat4,
 }
 
 renderer_init :: proc() {
@@ -41,14 +40,7 @@ renderer_init :: proc() {
 
 	render_state.depth_texture = sdl.CreateGPUTexture(render_state.gpu, depth_texture_info)
 	assert(render_state.depth_texture != nil, string(sdl.GetError()))
-}
-
-renderer_set_view_matrix :: proc() {
-	active_camera := world.cameras[0]
-	view_matrix := m.look_at(active_camera.transform.pos, active_camera.target, active_camera.up)
-	render_state.view_proj =
-		m.perspective(active_camera.fovy, window_aspect_ratio(), NEAR_PLANE, FAR_PLANE) *
-		view_matrix
+	pipeline_default_create()
 }
 
 renderer_begin_cmd_buffer :: proc() {
@@ -114,8 +106,13 @@ renderer_draw :: proc {
 }
 
 renderer_draw_world :: proc() {
-	renderer_set_view_matrix()
-
+    active_camera := world.cameras[0]
+    
+    world_buffer: GPUWorldBuffer
+	world_buffer.view       = m.look_at(active_camera.transform.pos, active_camera.target, active_camera.up)
+	world_buffer.proj       = m.perspective(active_camera.fovy, window_aspect_ratio(), NEAR_PLANE, FAR_PLANE)
+	sdl.PushGPUVertexUniformData(render_state.cmd_buffer, 0, &world_buffer, size_of(GPUWorldBuffer))
+	
 	renderer_update_swapchain_texture()
 	if render_state.swapchain_texture == nil do return
 
@@ -139,11 +136,8 @@ renderer_draw_world :: proc() {
 		&depth_target_info,
 	)
 
-	// for &entity in world.entities { 
-	//     if len(entity.geometry.vertices) == 0 do continue
-	//     renderer_draw(render_pass, &entity)
-	// }
-
+	sdl.BindGPUGraphicsPipeline(render_pass, materials[.Default].pipeline)
+	
 	if len(world.player.geometry.vertices) != 0 {
 		renderer_draw(render_pass, &world.player)
 	}
@@ -172,20 +166,22 @@ renderer_draw_geometry :: proc(render_pass: ^sdl.GPURenderPass, geom: ^Geometry)
 	if (geom.vertex_buffer == nil) {
 		renderer_setup_vertex_buffer(geom)
 	}
-	if (materials[geom.material_type].pipeline == nil) {
-	    material_create(geom.material_type)
-	}
+	// if (materials[geom.material_type].pipeline == nil) {
+	//     material_create(geom.material_type)
+	// }
 
-	mvp := render_state.view_proj * geom.model_matrix
-	sdl.PushGPUVertexUniformData(render_state.cmd_buffer, 0, &mvp, size_of(geom.model_matrix))
+	
+	
+	object_buffer: GPUObjectBuffer
+	object_buffer.model = geom.model_matrix
+	sdl.PushGPUVertexUniformData(render_state.cmd_buffer, 1, &object_buffer, size_of(GPUObjectBuffer))
 
 	sdl.BindGPUVertexBuffers(render_pass, 0, &sdl.GPUBufferBinding{buffer = geom.vertex_buffer}, 1)
 
-	sdl.BindGPUGraphicsPipeline(render_pass, materials[geom.material_type].pipeline)
 
 	sdl.DrawGPUPrimitives(render_pass, geom.vertex_count, 1, 0, 0)
 }
-
+ 
 renderer_draw_ui :: proc(ui_draw_data: ^im.DrawData) {
 	if ui_draw_data == nil do return
 	im_sdlgpu.PrepareDrawData(ui_draw_data, render_state.cmd_buffer)

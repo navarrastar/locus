@@ -480,6 +480,19 @@ ATTRIBUTES_POS_COLOR :: [?]sdl.GPUVertexAttribute {
     sdl.GPUVertexAttribute {
         location = 0,
         format = .FLOAT3, 
+        offset = u32(offset_of(Vertex_PosColor, pos))
+    },
+    sdl.GPUVertexAttribute {
+        location = 1,
+        format = .FLOAT4,
+        offset = u32(offset_of(Vertex_PosColor, color)),
+    },
+}
+
+ATTRIBUTES_POS_COLOR_NORMAL :: [?]sdl.GPUVertexAttribute {
+    sdl.GPUVertexAttribute {
+        location = 0,
+        format = .FLOAT3, 
         offset = u32(offset_of(Vertex_PosColorNormal, pos))
     },
     sdl.GPUVertexAttribute {
@@ -488,14 +501,8 @@ ATTRIBUTES_POS_COLOR :: [?]sdl.GPUVertexAttribute {
         offset = u32(offset_of(Vertex_PosColorNormal, color)),
     },
     sdl.GPUVertexAttribute {
-        location = 3,
+        location = 2,
         format = .FLOAT3,
         offset = u32(offset_of(Vertex_PosColorNormal, normal)),
     }
 }
-
-
-
-
-
-

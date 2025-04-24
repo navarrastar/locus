@@ -77,12 +77,12 @@ shader_process_start_shadercross :: proc(path_src: string, path_dst: string) -> 
 shader_determine_stage :: proc(path_src: string) -> sdl.GPUShaderStage {
     stage: sdl.GPUShaderStage
     switch filepath.long_ext(path_src) {
-    case ".vert.hlsl":
+    case ".vert.hlsl", ".vert.spv":
         stage = .VERTEX
-    case ".frag.hlsl":
+    case ".frag.hlsl", ".frag.spv":
         stage = .FRAGMENT
     case:
-        panic("")
+        fmt.panicf("Unkonwn shader stage:", path_src)
     }
     return stage
 }

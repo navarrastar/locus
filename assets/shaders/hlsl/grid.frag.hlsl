@@ -1,7 +1,7 @@
 struct Input {
     float4 position : SV_Position;
-    float4 color    : TEXCOORD0;
-    float2 uv       : TEXCOORD1;
+    float4 color    : TEXCOORD1;
+    float2 uv       : TEXCOORD2;
 };
 
 

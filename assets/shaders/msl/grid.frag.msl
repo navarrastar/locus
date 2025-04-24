@@ -19,22 +19,22 @@ struct main0_out
 
 struct main0_in
 {
-    float4 in_var_TEXCOORD0 [[user(locn0)]];
-    float2 in_var_TEXCOORD1 [[user(locn1)]];
+    float4 in_var_TEXCOORD1 [[user(locn0)]];
+    float2 in_var_TEXCOORD2 [[user(locn1)]];
 };
 
 fragment main0_out main0(main0_in in [[stage_in]], float4 gl_FragCoord [[position]])
 {
     main0_out out = {};
-    float4 _35 = in.in_var_TEXCOORD0;
-    float2 _34 = in.in_var_TEXCOORD1;
+    float4 _35 = in.in_var_TEXCOORD1;
+    float2 _34 = in.in_var_TEXCOORD2;
     float _38 = 0.0;
-    float2 _46 = in.in_var_TEXCOORD1 * 20.0;
+    float2 _46 = in.in_var_TEXCOORD2 * 20.0;
     float2 _40 = _46;
     float2 _36 = cos(_46);
     float _52 = precise::max(_36.x, _36.y);
     float _37 = _52;
-    float4 _54 = in.in_var_TEXCOORD0 * smoothstep(0.9900000095367431640625, 1.0, _52);
+    float4 _54 = in.in_var_TEXCOORD1 * smoothstep(0.9900000095367431640625, 1.0, _52);
     float _55 = _54.x;
     float3 _39 = float3(_55, _54.yz);
     float4 _59 = float4(_55, _54.yz, 1.0);
