@@ -18,8 +18,8 @@ pipeline_create :: proc(type: MaterialType) {
 }
 
 pipeline_default_create :: proc() {
-    vert_shader := shader_load(SHADER_DIR + "hlsl/default.vert.hlsl")
-    frag_shader := shader_load(SHADER_DIR + "hlsl/default.frag.hlsl")
+    vert_shader := shader_load(SHADER_DIR + "hlsl/default.vert.hlsl", 2)
+    frag_shader := shader_load(SHADER_DIR + "hlsl/default.frag.hlsl", 0)
     if vert_shader == nil || frag_shader == nil {
         log.error("Failed to load default shaders")
         return
@@ -60,8 +60,8 @@ pipeline_default_create :: proc() {
 }
 
 pipeline_grid_create :: proc() {
-    vert_shader := shader_load(SHADER_DIR + "hlsl/grid.vert.hlsl")
-    frag_shader := shader_load(SHADER_DIR + "hlsl/grid.frag.hlsl")
+    vert_shader := shader_load(SHADER_DIR + "hlsl/grid.vert.hlsl", 2)
+    frag_shader := shader_load(SHADER_DIR + "hlsl/grid.frag.hlsl", 0)
     if vert_shader == nil || frag_shader == nil {
         log.error("Failed to load grid shaders")
         return

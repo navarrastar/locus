@@ -40,7 +40,6 @@ renderer_init :: proc() {
 
 	render_state.depth_texture = sdl.CreateGPUTexture(render_state.gpu, depth_texture_info)
 	assert(render_state.depth_texture != nil, string(sdl.GetError()))
-	pipeline_default_create()
 }
 
 renderer_begin_cmd_buffer :: proc() {
@@ -53,6 +52,110 @@ renderer_end_cmd_buffer :: proc() {
 
 renderer_cleanup :: proc() {
 	free(&render_state)
+}
+
+
+
+/* DRAW */
+
+renderer_draw :: proc {
+	renderer_draw_world,
+	renderer_draw_entity,
+	renderer_draw_geometry,
+}
+
+renderer_draw_world :: proc() {
+    active_camera := world.cameras[0]
+    
+    world_buffer: GPUWorldBuffer
+	world_buffer.view       = m.look_at(active_camera.transform.pos, active_camera.target, active_camera.up)
+	world_buffer.proj       = m.perspective(active_camera.fovy, window_aspect_ratio(), NEAR_PLANE, FAR_PLANE)
+	
+	renderer_update_swapchain_texture()
+	if render_state.swapchain_texture == nil do return
+
+	color_target := sdl.GPUColorTargetInfo {
+		texture     = render_state.swapchain_texture,
+		load_op     = .CLEAR,
+		clear_color = {0, 0, 0, 1.0},
+		store_op    = .STORE,
+	}
+
+	depth_target_info := sdl.GPUDepthStencilTargetInfo {
+		texture     = render_state.depth_texture,
+		load_op     = .LOAD,
+		clear_depth = 1,
+		store_op    = .DONT_CARE,
+	}
+	render_pass := sdl.BeginGPURenderPass(
+		render_state.cmd_buffer,
+		&color_target,
+		1,
+		&depth_target_info,
+	)
+
+	
+	if len(world.player.geometry.vertices) != 0 {
+		renderer_draw(render_pass, &world.player)
+	}
+	for &opponent in world.opponents {
+		if len(opponent.geometry.vertices) == 0 do continue
+		renderer_draw(render_pass, &opponent)
+	}
+	for &camera in world.cameras {
+		if len(camera.geometry.vertices) == 0 do continue
+		renderer_draw(render_pass, &camera)
+	}
+	for &static_mesh in world.static_meshes {
+		if len(static_mesh.geometry.vertices) == 0 do continue
+		// This doesnt work unless it is right here
+		sdl.PushGPUVertexUniformData(render_state.cmd_buffer, 0, &world_buffer, size_of(GPUWorldBuffer)) 
+		renderer_draw(render_pass, &static_mesh)
+	}
+
+	sdl.EndGPURenderPass(render_pass)
+}
+
+renderer_draw_entity :: proc(render_pass: ^sdl.GPURenderPass, entity: ^Entity) {
+	entity.geometry.model_matrix = m.to_matrix(entity.transform)
+	renderer_draw(render_pass, &entity.geometry)
+}
+
+renderer_draw_geometry :: proc(render_pass: ^sdl.GPURenderPass, geom: ^Geometry) {
+	if (geom.vertex_buffer == nil) {
+		renderer_setup_vertex_buffer(geom)
+	}
+	if (materials[geom.material_type].pipeline == nil) {
+	    material_create(geom.material_type)
+	}
+
+	sdl.BindGPUGraphicsPipeline(render_pass, materials[geom.material_type].pipeline)
+	
+	object_buffer: GPUObjectBuffer
+	object_buffer.model = geom.model_matrix
+	sdl.PushGPUVertexUniformData(render_state.cmd_buffer, 1, &object_buffer, size_of(GPUObjectBuffer))
+
+	sdl.BindGPUVertexBuffers(render_pass, 0, &sdl.GPUBufferBinding{buffer = geom.vertex_buffer}, 1)
+
+
+	sdl.DrawGPUPrimitives(render_pass, geom.vertex_count, 1, 0, 0)
+}
+ 
+renderer_draw_ui :: proc(ui_draw_data: ^im.DrawData) {
+	if ui_draw_data == nil do return
+	im_sdlgpu.PrepareDrawData(ui_draw_data, render_state.cmd_buffer)
+
+	color_target := sdl.GPUColorTargetInfo {
+		texture  = render_state.swapchain_texture,
+		load_op  = .LOAD,
+		store_op = .STORE,
+	}
+
+	render_pass := sdl.BeginGPURenderPass(render_state.cmd_buffer, &color_target, 1, nil)
+
+	im_sdlgpu.RenderDrawData(ui_draw_data, render_state.cmd_buffer, render_pass)
+
+	sdl.EndGPURenderPass(render_pass)
 }
 
 renderer_setup_vertex_buffer :: proc(geom: ^Geometry) {
@@ -95,106 +198,4 @@ renderer_update_swapchain_texture :: proc() {
 		nil,
 		nil,
 	)
-}
-
-/* DRAW */
-
-renderer_draw :: proc {
-	renderer_draw_world,
-	renderer_draw_entity,
-	renderer_draw_geometry,
-}
-
-renderer_draw_world :: proc() {
-    active_camera := world.cameras[0]
-    
-    world_buffer: GPUWorldBuffer
-	world_buffer.view       = m.look_at(active_camera.transform.pos, active_camera.target, active_camera.up)
-	world_buffer.proj       = m.perspective(active_camera.fovy, window_aspect_ratio(), NEAR_PLANE, FAR_PLANE)
-	sdl.PushGPUVertexUniformData(render_state.cmd_buffer, 0, &world_buffer, size_of(GPUWorldBuffer))
-	
-	renderer_update_swapchain_texture()
-	if render_state.swapchain_texture == nil do return
-
-	color_target := sdl.GPUColorTargetInfo {
-		texture     = render_state.swapchain_texture,
-		load_op     = .CLEAR,
-		clear_color = {0, 0, 0, 1.0},
-		store_op    = .STORE,
-	}
-
-	depth_target_info := sdl.GPUDepthStencilTargetInfo {
-		texture     = render_state.depth_texture,
-		load_op     = .LOAD,
-		clear_depth = 1,
-		store_op    = .DONT_CARE,
-	}
-	render_pass := sdl.BeginGPURenderPass(
-		render_state.cmd_buffer,
-		&color_target,
-		1,
-		&depth_target_info,
-	)
-
-	sdl.BindGPUGraphicsPipeline(render_pass, materials[.Default].pipeline)
-	
-	if len(world.player.geometry.vertices) != 0 {
-		renderer_draw(render_pass, &world.player)
-	}
-	for &opponent in world.opponents {
-		if len(opponent.geometry.vertices) == 0 do continue
-		renderer_draw(render_pass, &opponent)
-	}
-	for &camera in world.cameras {
-		if len(camera.geometry.vertices) == 0 do continue
-		renderer_draw(render_pass, &camera)
-	}
-	for &static_mesh in world.static_meshes {
-		if len(static_mesh.geometry.vertices) == 0 do continue
-		renderer_draw(render_pass, &static_mesh)
-	}
-
-	sdl.EndGPURenderPass(render_pass)
-}
-
-renderer_draw_entity :: proc(render_pass: ^sdl.GPURenderPass, entity: ^Entity) {
-	entity.geometry.model_matrix = m.to_matrix(entity.transform)
-	renderer_draw(render_pass, &entity.geometry)
-}
-
-renderer_draw_geometry :: proc(render_pass: ^sdl.GPURenderPass, geom: ^Geometry) {
-	if (geom.vertex_buffer == nil) {
-		renderer_setup_vertex_buffer(geom)
-	}
-	// if (materials[geom.material_type].pipeline == nil) {
-	//     material_create(geom.material_type)
-	// }
-
-	
-	
-	object_buffer: GPUObjectBuffer
-	object_buffer.model = geom.model_matrix
-	sdl.PushGPUVertexUniformData(render_state.cmd_buffer, 1, &object_buffer, size_of(GPUObjectBuffer))
-
-	sdl.BindGPUVertexBuffers(render_pass, 0, &sdl.GPUBufferBinding{buffer = geom.vertex_buffer}, 1)
-
-
-	sdl.DrawGPUPrimitives(render_pass, geom.vertex_count, 1, 0, 0)
-}
- 
-renderer_draw_ui :: proc(ui_draw_data: ^im.DrawData) {
-	if ui_draw_data == nil do return
-	im_sdlgpu.PrepareDrawData(ui_draw_data, render_state.cmd_buffer)
-
-	color_target := sdl.GPUColorTargetInfo {
-		texture  = render_state.swapchain_texture,
-		load_op  = .LOAD,
-		store_op = .STORE,
-	}
-
-	render_pass := sdl.BeginGPURenderPass(render_state.cmd_buffer, &color_target, 1, nil)
-
-	im_sdlgpu.RenderDrawData(ui_draw_data, render_state.cmd_buffer, render_pass)
-
-	sdl.EndGPURenderPass(render_pass)
 }

@@ -28,7 +28,7 @@ ShaderInfo :: struct {
     num_uniform_buffers:  u32
 }
 
-shader_load :: proc(path_src: string) -> ^sdl.GPUShader {
+shader_load :: proc(path_src: string, num_uniform_buffers: u32) -> ^sdl.GPUShader {
     stage    := shader_determine_stage(path_src)
     path_dst := shader_determine_path_dst(path_src)
     
@@ -49,7 +49,7 @@ shader_load :: proc(path_src: string) -> ^sdl.GPUShader {
         num_samplers         = {},
         num_storage_textures = {},
         num_storage_buffers  = {},
-        num_uniform_buffers  = 1
+        num_uniform_buffers  = num_uniform_buffers
     }
     
     shader := sdl.CreateGPUShader(render_state.gpu, create_info)
