@@ -94,7 +94,7 @@ shader_determine_path_dst :: proc(path_src: string) -> string {
         path_dst = strings.concatenate({ SHADER_PATH_DST, stem, ".msl"})
     } else
     when SHADER_FORMAT == .SPIRV {
-        path_dst = strings.concatenate({ SHADER_PATH_DST, stem, ".spirv"})
+        path_dst = strings.concatenate({ SHADER_PATH_DST, stem, ".spv"})
     }
     
     return path_dst
