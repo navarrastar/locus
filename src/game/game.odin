@@ -40,7 +40,7 @@ update :: proc() {
     if .None in ui_state.visible_panels {
         player_update()
         projectile_update()
-        physics_update()
+        physics_step()
     }
     
     renderer_begin_cmd_buffer()
