@@ -1,5 +1,6 @@
 package game
 
+// import "core:log"
 import "core:time"
 
 import m "../math"
@@ -7,15 +8,19 @@ import m "../math"
 
 
 init :: proc() {
+    start_time = time.now()
+    
     world        = new(World)
     window_state = new(WindowState)
     render_state = new(RenderState)
     ui_state     = new(UIState)
+    phys_world   = new(PhysicsWorld)
     every_vertex = make([dynamic]f32)
     
     window_init(context)
     renderer_init()
     ui_init()
+    physics_init()
     
     game_default_level()
 }
@@ -34,6 +39,8 @@ update :: proc() {
     
     if .None in ui_state.visible_panels {
         player_update()
+        projectile_update()
+        physics_update()
     }
     
     renderer_begin_cmd_buffer()
@@ -44,9 +51,17 @@ update :: proc() {
     renderer_draw_ui(ui_draw_data)
     
     renderer_end_cmd_buffer()
+    
+    input_tick()
 }
 
 cleanup :: proc() {
+    free(&every_vertex)
+    free(phys_world)
+    free(ui_state)
+    free(render_state)
+    free(window_state)
+    free(world.player.inventory)
     free(world)
 }
 
@@ -56,63 +71,63 @@ should_shutdown :: proc() -> bool {
 
 game_default_level :: proc() {
     player := Entity_Player {
-        name = "player",
-        variant = typeid_of(Entity_Player),
-        transform = { pos = {-3, 2, -1}, rot = {0, 0, 0}, scale = 1 },
-        geometry = capsule(material=.Default)
+        transform = { pos = {-3, 0, -1}, rot = {0, 0, 0}, scale = 1 },
+        geometry = capsule(material=.Test),
+        speed = 10,
+        face_dir = {1, 0, 0}
     }
-    world_spawn(player)
+    world_spawn(&player)
     
-    capsule := Entity_StaticMesh {
-        name = "capsule",
-        transform = { pos ={3, 5, -1}, rot={0, 0, 0}, scale=1 },
-        geometry = capsule()
+    opponent_1 := Entity_Opp {
+        name = "opp_0",
+        transform = m.DEFAULT_TRANSFORM,
+        geometry = capsule(color=COLOR_RED)
     }
-    world_spawn(capsule)
+    world_spawn(&opponent_1)
     
-    random_rectangle := Entity_StaticMesh {
-        name = "random_rect",
-        transform = { pos={3, 2, -1}, rot={0, 0, 0}, scale=1 },
-        geometry = rectangle(material=.Default)
-    }
-    world_spawn(random_rectangle)
-    
-    grid := Entity_StaticMesh {
-        name = "grid",
+    grid := Entity_Mesh {
         transform = m.DEFAULT_TRANSFORM,
         geometry = grid(color = {0.4, 0.84, 0.9, 1})
     }
-    world_spawn(grid)
+    world_spawn(&grid)
     
-    random_triangle_2 := Entity_StaticMesh {
-        name = "random_triangle_2",
-        transform = m.DEFAULT_TRANSFORM,
-        geometry = triangle(color={0, 0, 1, 1})
-    }
-    world_spawn(random_triangle_2)
+    // capsule := Entity_Mesh {
+    //     transform = { pos ={3, 0, -1}, rot={0, 0, 0}, scale=1 },
+    //     geometry = capsule(color=COLOR_ORANGE, material=.Test)
+    // }
+    // world_spawn(capsule)
     
-    default_box := Entity_StaticMesh {
-        name = "box",
-        transform = { pos={0, 3, -1}, rot={0, 0, 0}, scale=1 },
-        geometry = cube(color={0.43, 0.87, 0.87, 1})
-    }
-    world_spawn(default_box)
+    // random_rectangle := Entity_Mesh {
+    //     transform = { pos={3, 0, -1}, rot={0, 0, 0}, scale=1 },
+    //     geometry = rectangle(material=.Default)
+    // }
+    // world_spawn(random_rectangle)
+    
+    // random_triangle_2 := Entity_Mesh {
+    //     transform = m.DEFAULT_TRANSFORM,
+    //     geometry = triangle(color={0, 0, 1, 1})
+    // }
+    // world_spawn(random_triangle_2)
+    
+    // default_box := Entity_Mesh {
+    //     transform = { pos={0, 0, -1}, rot={0, 0, 0}, scale=1 },
+    //     geometry = cube(color={0.43, 0.87, 0.87, 1})
+    // }
+    // world_spawn(default_box)
 
-    random_triangle := Entity_StaticMesh {
-        name = "random_triangle",
-        transform = { pos={3, 4, -10}, rot={0, 0, 0}, scale=1 },
-        geometry = triangle({0, -1, -1}, {1, 0, -1}, {0.5, 1, -1}, {0, 0, 1, 1})
-    }
-    world_spawn(random_triangle)
+    // random_triangle := Entity_Mesh {
+    //     transform = { pos={3, 0, -10}, rot={0, 0, 0}, scale=1 },
+    //     geometry = triangle({0, -1, -1}, {1, 0, -1}, {0.5, 1, -1}, {0, 0, 1, 1})
+    // }
+    // world_spawn(random_triangle)
 
     camera := Entity_Camera {
-        name = "camera",
-        target = {0, 0, -5},
-        transform = { pos = {0, 1, 2}, rot = {0, 0, 0}, scale = 1 },
+        target = {0, 0, -4},
+        transform = { pos = {0, 12, 2}, rot = {0, 0, 0}, scale = 1 },
         up = { 0.0, 1.0, 0.0 },
-        fovy = 90,
+        fovy = m.to_radians(80),
         projection = .Perspective
     }
-    world_spawn(camera, 0)
+    world_spawn(&camera)
 
 }

@@ -12,11 +12,12 @@ main :: proc() {
 			opt = log.Options{.Level, .Terminal_Color, .Short_File_Path, .Line, .Time},
 		)
 	}
-
+	
 	game.init()
 	defer game.cleanup()
 
 	for !game.should_shutdown() {
+	    free_all(context.temp_allocator)
 	    game.update()
 	}
 

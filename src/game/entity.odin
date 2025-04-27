@@ -4,27 +4,24 @@ package game
 import m "../math"
 
 
-EntityVariant :: union {
-    Entity_Player,
-    Entity_StaticMesh,
-    Entity_Camera,
-    Entity_Opponent
-}
-
 
 Entity :: struct {
     using transform: m.Transform,
-    variant: typeid,
-    name: string,
-    geometry: Geometry
+    idx:      u8,
+    name:     string,
+    geometry: Geometry,
+    velocity: m.Vec3
 }
 
 Entity_Player :: struct {
     using entity: Entity,
-    inventory: Inventory
+    inventory:  ^Inventory,
+    wish_dir:   m.Vec3,
+    face_dir:   m.Vec3,
+    speed: f32
 }
 
-Entity_StaticMesh :: struct {
+Entity_Mesh :: struct {
     using entity: Entity,
 }
 
@@ -36,6 +33,13 @@ Entity_Camera :: struct {
     projection: enum { Perspective, Orthographic }
 }
 
-Entity_Opponent :: struct {
+Entity_Opp :: struct {
     using entity: Entity,
+    inventory:  ^Inventory,
 }
+
+Entity_Projectile :: struct {
+    using entity: Entity,
+    speed: f32,
+}
+

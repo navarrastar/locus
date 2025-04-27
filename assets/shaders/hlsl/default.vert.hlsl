@@ -1,10 +1,10 @@
-cbuffer World : register(b0, space1) {
-    float4x4 view;
-    float4x4 proj;
+cbuffer Object : register(b0, space1) {
+    float4x4 model;
 };
 
-cbuffer Object : register(b1, space1) {
-    float4x4 model;
+cbuffer World : register(b1, space1) {
+    float4x4 view;
+    float4x4 proj;
 };
 
 struct Input {

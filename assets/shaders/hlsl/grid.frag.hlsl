@@ -1,17 +1,16 @@
+static float lineWidth = 0.05;
+
 struct Input {
     float4 position : SV_Position;
     float4 color    : TEXCOORD0;
-    float2 uv       : TEXCOORD1;
+    float2 fragPos  : TEXCOORD1;
 };
 
-
-float draw_grid(float2 uv) {
-    float2 grid_uv = cos(uv);
-    return max(grid_uv.x, grid_uv.y); 
-}
-
 float4 main(Input input) : SV_Target {
-    float thickness = 20 / 21;
-    float3 color = smoothstep(0.99, 1, draw_grid(input.uv * 20)) * input.color; 
-    return float4(color, 1);
+    float2 lineAA = fwidth(input.fragPos);
+    float2 gridUV = abs(frac(input.fragPos) * 2 - 1);
+    float2 grid2 = smoothstep(lineWidth + lineAA, lineWidth - lineAA, gridUV);
+    float grid = lerp(grid2.x, 1, grid2.y);
+
+    return input.color * grid;
 }

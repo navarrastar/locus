@@ -5,7 +5,6 @@ cbuffer Object : register(b0, space1) {
 cbuffer World : register(b1, space1) {
     float4x4 view;
     float4x4 proj;
-    float3   cameraPos;
 };
 
 struct Input {
@@ -16,7 +15,7 @@ struct Input {
 struct Output {
     float4 position  : SV_Position;
     float4 color     : TEXCOORD0;
-    float2 uv        : TEXCOORD1;
+    float2 fragPos   : TEXCOORD1;
 };
 
 Output main(Input input) {
@@ -25,7 +24,7 @@ Output main(Input input) {
     float4x4 mvp = mul(proj, mul(view, model));
     output.position = mul(mvp, float4(input.position, 1));
     output.color = input.color;
-    output.uv    = max(input.position.xy, input.position.xz);
+    output.fragPos = input.position.xz;
     
     return output;
 }

@@ -1,5 +1,5 @@
 static float3 lightPos   = { -1, 2, 3 };
-static float4 lightColor = { 1, 0, 0, 10 };
+static float4 lightColor = { 1, 1, 1, 10 };
 
 struct Input {
     float4 position : SV_Position;
@@ -22,7 +22,7 @@ float4 main(Input input) : SV_Target0 {
         float attenuationFactor = 1 / pow(distToLight, 2);
         float3 incomingRadiance = lightColor.xyz * lightColor.w;
         float3 irradiance = incomingRadiance * incidenceAngleFactor * attenuationFactor;
-        float3 brdf = 1;
+        float3 brdf = input.color;
         reflectedRadiance = irradiance * brdf;
     } else {
         reflectedRadiance = float3(0, 0, 0);

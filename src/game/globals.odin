@@ -1,10 +1,15 @@
 #+feature dynamic-literals
 package game
 
+import "core:time"
+
 import sdl "vendor:sdl3"
 
 SHADER_DIR :: "./assets/shaders/"
 
+WORLD_BOUNDS :: 100
+
+start_time: time.Time
 
 shader_should_check_for_changes: bool
 
@@ -16,7 +21,8 @@ dt: f32
 world: ^World
 window_state: ^WindowState
 render_state: ^RenderState
-ui_state: ^UIState
+ui_state:     ^UIState
+phys_world:   ^PhysicsWorld
 
 materials: [MaterialType]Material
 shader_name_to_material_type := map[string]MaterialType {

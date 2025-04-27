@@ -10,6 +10,7 @@ MaterialType :: enum {
     Default,
     Capsule,
     Grid,
+    Test
 }
 
 Material :: struct {

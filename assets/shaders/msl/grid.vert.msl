@@ -12,7 +12,6 @@ struct type_World
 {
     float4x4 view;
     float4x4 proj;
-    float3 cameraPos;
 };
 
 struct Input
@@ -25,7 +24,7 @@ struct Output
 {
     float4 position;
     float4 color;
-    float2 uv;
+    float2 fragPos;
 };
 
 struct main0_out
@@ -44,21 +43,20 @@ struct main0_in
 vertex main0_out main0(main0_in in [[stage_in]], constant type_Object& Object [[buffer(0)]], constant type_World& World [[buffer(1)]])
 {
     main0_out out = {};
-    float3 _42 = in.in_var_TEXCOORD0;
-    float4 _41 = in.in_var_TEXCOORD1;
-    float4x4 _60 = World.proj * (World.view * Object.model);
-    float4x4 _49 = transpose(_60);
-    float4 _65 = _60 * float4(in.in_var_TEXCOORD0, 1.0);
-    float4 _48 = _65;
-    float4 _47 = in.in_var_TEXCOORD1;
-    float2 _68 = precise::max(in.in_var_TEXCOORD0.xy, in.in_var_TEXCOORD0.xz);
-    float2 _46 = _68;
-    float4 _45 = _65;
-    float4 _44 = in.in_var_TEXCOORD1;
-    float2 _43 = _68;
-    out.gl_Position = _65;
+    float3 _41 = in.in_var_TEXCOORD0;
+    float4 _40 = in.in_var_TEXCOORD1;
+    float4x4 _59 = World.proj * (World.view * Object.model);
+    float4x4 _48 = transpose(_59);
+    float4 _64 = _59 * float4(in.in_var_TEXCOORD0, 1.0);
+    float4 _47 = _64;
+    float4 _46 = in.in_var_TEXCOORD1;
+    float2 _45 = in.in_var_TEXCOORD0.xz;
+    float4 _44 = _64;
+    float4 _43 = in.in_var_TEXCOORD1;
+    float2 _42 = in.in_var_TEXCOORD0.xz;
+    out.gl_Position = _64;
     out.out_var_TEXCOORD0 = in.in_var_TEXCOORD1;
-    out.out_var_TEXCOORD1 = _68;
+    out.out_var_TEXCOORD1 = in.in_var_TEXCOORD0.xz;
     return out;
 }
 

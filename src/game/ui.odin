@@ -80,12 +80,21 @@ ui_show_general_panel :: proc() {
                 im.DragFloat3("Position", &world.player.pos)
                 im.DragFloat3("Rotation", &world.player.rot)
             }
-            if im.CollapsingHeader("Static Meshes") {
-                for &mesh in world.static_meshes {
+            if im.CollapsingHeader("Meshes") {
+                for &mesh in world.meshes {
                     if mesh.name == "" do continue
                     if im.CollapsingHeader(strings.clone_to_cstring(mesh.name, context.temp_allocator)) {
                         im.DragFloat3("Position", &mesh.pos)
                         im.DragFloat3("Rotation", &mesh.rot)
+                    }
+                }
+            }
+            if im.CollapsingHeader("Opponents") {
+                for &opponent in world.opps {
+                    if opponent.name == "" do continue
+                    if im.CollapsingHeader(strings.clone_to_cstring(opponent.name, context.temp_allocator)) {
+                        im.DragFloat3("Position", &opponent.pos)
+                        im.DragFloat3("Rotation", &opponent.rot)
                     }
                 }
             }

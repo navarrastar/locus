@@ -3,15 +3,15 @@
 
 using namespace metal;
 
+struct type_Object
+{
+    float4x4 model;
+};
+
 struct type_World
 {
     float4x4 view;
     float4x4 proj;
-};
-
-struct type_Object
-{
-    float4x4 model;
 };
 
 struct Input
@@ -44,7 +44,7 @@ struct main0_in
     float3 in_var_TEXCOORD2 [[attribute(2)]];
 };
 
-vertex main0_out main0(main0_in in [[stage_in]], constant type_World& World [[buffer(0)]], constant type_Object& Object [[buffer(1)]])
+vertex main0_out main0(main0_in in [[stage_in]], constant type_Object& Object [[buffer(0)]], constant type_World& World [[buffer(1)]])
 {
     main0_out out = {};
     float3 _45 = in.in_var_TEXCOORD0;

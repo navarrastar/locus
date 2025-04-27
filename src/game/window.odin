@@ -54,12 +54,14 @@ window_poll_events :: proc() {
             case .QUIT:
                 window_state.should_close = true
             case .KEY_DOWN:
+                input_handle_down_event(event.key.scancode)
                 if event.key.scancode == .ESCAPE    do window_state.should_close = true
                 if event.key.scancode == .GRAVE     do ui_toggle_visibility({ .None })
                 if event.key.scancode == .D         do ui_toggle_visibility({ .Demo })
                 if event.key.scancode == .G         do ui_toggle_visibility({ .General })
-                if event.key.scancode == .L         do materials[.Grid].pipeline = nil
                 if event.key.scancode == .BACKSLASH do shader_toggle_should_check_for_changes()
+            case .KEY_UP:
+                input_handle_up_event(event.key.scancode)
         }
 
     }
