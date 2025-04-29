@@ -6,7 +6,7 @@ import "core:time"
 
 WEAPON_FIREBALL_SPEED    :: 30
 WEAPON_FIREBALL_DAMAGE   :: 10
-WEAPON_FIREBALL_COOLDOWN :: time.Second
+WEAPON_FIREBALL_COOLDOWN :: 0
 WEAPON_FIREBALL_SIZE     :: 2
 
 WeaponSlot :: enum {

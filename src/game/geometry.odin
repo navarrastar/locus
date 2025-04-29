@@ -10,6 +10,7 @@ Geometry :: struct {
     model_matrix:  m.Mat4,
     vertices:      []f32,
     vertex_size:   u32,
+    vertex_stride: u32,
 
     vertex_buffer: ^sdl.GPUBuffer,
     vertex_count:  u32,
@@ -110,7 +111,7 @@ Vertex_PosColorNormal :: struct {
     normal: Normal,
 }
 
-MeshVertex :: struct {
+Vertex_AllAttributes :: struct {
     pos:     Pos,
     color:   Color,
     uv:      UV,
@@ -153,6 +154,7 @@ triangle :: proc(
         vertices = every_vertex[vertices_start:vertices_start+30],
         vertex_count = 3,
         vertex_size = size_of(Vertex_PosColorNormal),
+        vertex_stride = size_of(Vertex_PosColorNormal) / size_of(f32),
         material_type = material
     }
 }
@@ -193,6 +195,7 @@ rectangle :: proc(
         vertices = every_vertex[vertices_start:vertices_start+60],
         vertex_count = 6,
         vertex_size = size_of(Vertex_PosColorNormal),
+        vertex_stride = size_of(Vertex_PosColorNormal) / size_of(f32),
         material_type = material
     }
 }
@@ -219,6 +222,7 @@ grid :: proc(
         vertices = every_vertex[vertices_start:vertices_start+42],
         vertex_count = 6,
         vertex_size = size_of(Vertex_PosColor),
+        vertex_stride = size_of(Vertex_PosColor) / size_of(f32),
         material_type = material
     }
 }
@@ -294,6 +298,7 @@ cube :: proc(color: Color = COLOR_WHITE, material: MaterialType = .Default) -> G
         vertices = every_vertex[vertices_start:vertices_start+360], // 36 vertices * 10 components each
         vertex_count = 36, // 6 faces * 6 vertices per face
         vertex_size = size_of(Vertex_PosColorNormal),
+        vertex_stride = size_of(Vertex_PosColorNormal) / size_of(f32),
         material_type = material
     }
 }
@@ -462,6 +467,7 @@ capsule :: proc(
         vertices = every_vertex[vertices_start:vertices_start + vertex_count * 10],
         vertex_count = u32(vertex_count),
         vertex_size = size_of(Vertex_PosColorNormal),
+        vertex_stride = size_of(Vertex_PosColorNormal) / size_of(f32),
         material_type = material,
     }
 }
@@ -562,54 +568,76 @@ sphere :: proc(
         vertices = every_vertex[vertices_start:vertices_start + vertex_count * 10],
         vertex_count = u32(vertex_count),
         vertex_size = size_of(Vertex_PosColorNormal),
+        vertex_stride = size_of(Vertex_PosColorNormal) / size_of(f32),
         material_type = material,
     }
 }
-   
 
+geom_debug :: proc(shape: []Pos, color: Color = COLOR_RED) -> Geometry {
+    vertices_start := len(every_vertex)
+    vertex_count := 0
+    
+    // For a debug visualization, we'll draw points and lines connecting them
+    // First, add each point as a small dot
+    for point in shape {
+        // Add each position with the specified color
+        append(&every_vertex,
+            point.x, point.y, point.z, color.x, color.y, color.z, color.w)
+        vertex_count += 1
+    }
+    
+    return Geometry {
+        model_matrix = m.IDENTITY_MAT,
+        vertices = every_vertex[vertices_start:vertices_start + vertex_count * 7],
+        vertex_count = u32(vertex_count),
+        vertex_size = size_of(Vertex_PosColor),
+        vertex_stride = size_of(Vertex_PosColor) / size_of(f32),
+        material_type = .Grid
+    }
+}
 
-MESH_ATTRIBUTES :: [?]sdl.GPUVertexAttribute {
+ATTRIBUTES_ALL :: [?]sdl.GPUVertexAttribute {
     // Position
     sdl.GPUVertexAttribute {
         location = 0,
         format = .FLOAT3,
-        offset = u32(offset_of(MeshVertex, pos))
+        offset = u32(offset_of(Vertex_AllAttributes, pos))
     },
     // Color
     sdl.GPUVertexAttribute {
         location = 1,
         format = .FLOAT4,
-        offset = u32(offset_of(MeshVertex, color))
+        offset = u32(offset_of(Vertex_AllAttributes, color))
     },
     // UV
     sdl.GPUVertexAttribute {
         location = 2,
         format = .FLOAT2,
-        offset = u32(offset_of(MeshVertex, uv))
+        offset = u32(offset_of(Vertex_AllAttributes, uv))
     },
     // Normal
     sdl.GPUVertexAttribute {
         location = 3,
         format = .FLOAT3,
-        offset = u32(offset_of(MeshVertex, normal))
+        offset = u32(offset_of(Vertex_AllAttributes, normal))
     },
     // Tangent
     sdl.GPUVertexAttribute {
         location = 4,
         format = .FLOAT4,
-        offset = u32(offset_of(MeshVertex, tangent))
+        offset = u32(offset_of(Vertex_AllAttributes, tangent))
     },
     // Joints
     sdl.GPUVertexAttribute {
         location = 5,
         format = .UINT4,
-        offset = u32(offset_of(MeshVertex, joints))
+        offset = u32(offset_of(Vertex_AllAttributes, joints))
     },
     // Weights
     sdl.GPUVertexAttribute {
         location = 6,
         format = .FLOAT4,
-        offset = u32(offset_of(MeshVertex, weights))
+        offset = u32(offset_of(Vertex_AllAttributes, weights))
     }
 }
 

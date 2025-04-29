@@ -24,7 +24,7 @@ renderer_init :: proc() {
 	render_state.gpu = sdl.CreateGPUDevice({SHADER_FORMAT}, true, nil)
 	assert(render_state.gpu != nil, string(sdl.GetError()))
 
-	assert(sdl.ClaimWindowForGPUDevice(render_state.gpu, window), "GPU failed to claim window")
+	assert(sdl.ClaimWindowForGPUDevice(render_state.gpu, window), string(sdl.GetError()))
 
 	swapchain_texture_format = sdl.GetGPUSwapchainTextureFormat(render_state.gpu, window)
 

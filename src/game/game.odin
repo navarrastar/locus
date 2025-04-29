@@ -14,13 +14,11 @@ init :: proc() {
     window_state = new(WindowState)
     render_state = new(RenderState)
     ui_state     = new(UIState)
-    phys_world   = new(PhysicsWorld)
     every_vertex = make([dynamic]f32)
     
     window_init(context)
     renderer_init()
     ui_init()
-    physics_init()
     
     game_default_level()
 }
@@ -40,7 +38,6 @@ update :: proc() {
     if .None in ui_state.visible_panels {
         player_update()
         projectile_update()
-        physics_step()
     }
     
     renderer_begin_cmd_buffer()
@@ -57,7 +54,6 @@ update :: proc() {
 
 cleanup :: proc() {
     free(&every_vertex)
-    free(phys_world)
     free(ui_state)
     free(render_state)
     free(window_state)
@@ -80,8 +76,8 @@ game_default_level :: proc() {
     
     opponent_1 := Entity_Opp {
         name = "opp_0",
-        transform = m.DEFAULT_TRANSFORM,
-        geometry = capsule(color=COLOR_RED)
+        transform = { pos = {0, 0, -10}, rot = {0, 0, 0}, scale = 1 },
+        geometry = capsule(material=.Test)
     }
     world_spawn(&opponent_1)
     

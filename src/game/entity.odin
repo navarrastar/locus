@@ -1,5 +1,7 @@
 package game
 
+import "core:reflect"
+import "base:builtin"
 
 import m "../math"
 
@@ -10,7 +12,8 @@ Entity :: struct {
     idx:      u8,
     name:     string,
     geometry: Geometry,
-    velocity: m.Vec3
+    physics:  Physics,
+    velocity: m.Vec3,
 }
 
 Entity_Player :: struct {

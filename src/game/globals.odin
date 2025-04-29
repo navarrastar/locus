@@ -22,7 +22,6 @@ world: ^World
 window_state: ^WindowState
 render_state: ^RenderState
 ui_state:     ^UIState
-phys_world:   ^PhysicsWorld
 
 materials: [MaterialType]Material
 shader_name_to_material_type := map[string]MaterialType {
@@ -33,4 +32,4 @@ shader_name_to_material_type := map[string]MaterialType {
 
 every_vertex: [dynamic]f32
 
-
+phys_visualize: bool

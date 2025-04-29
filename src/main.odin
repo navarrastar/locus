@@ -15,7 +15,7 @@ main :: proc() {
 	
 	game.init()
 	defer game.cleanup()
-
+	
 	for !game.should_shutdown() {
 	    free_all(context.temp_allocator)
 	    game.update()

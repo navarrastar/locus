@@ -166,3 +166,8 @@ sqrt :: proc(x: f32) -> f32 {
 abs :: proc(x: f32) -> f32 {
     return linalg.abs(x)
 }
+
+@(require_results)
+same_dir :: proc(dir1, dir2: Vec3) -> bool {
+    return dot(dir1, dir2) > 0
+}
