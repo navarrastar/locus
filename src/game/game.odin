@@ -19,7 +19,7 @@ init :: proc() {
 	window_init(context)
 	renderer_init()
 	ui_init()
-	
+
 	root_entity: EntityBase
 	world_spawn(&root_entity)
 
@@ -42,9 +42,9 @@ update :: proc() {
 	pass := renderer_begin_pass()
 
 	if .None in ui_state.visible_panels {
-        update_player()
-        player := world_get_player()
-        renderer_draw_entity(pass, &player.base)
+		update_player()
+		player := world_get_player()
+		renderer_draw_entity(pass, &player.base)
 
 		for &entity in world.entities {
 			world_update_entity(&entity)
@@ -77,6 +77,15 @@ should_shutdown :: proc() -> bool {
 }
 
 game_default_level :: proc() {
+   	player := Entity_Player {
+		transform = {pos = {-3, 0, -1}, rot = {0, 0, 0}, scale = 1},
+		geom = capsule(material = .Test),
+		speed = 10,
+		phys = {layer = .Layer1, mask = .Mask1},
+		face_dir = {1, 0, 0},
+	}
+	world_spawn(&player)
+	
 	grid := Entity_Mesh {
 		transform = m.DEFAULT_TRANSFORM,
 		geom      = grid(color = {0.4, 0.84, 0.9, 1}),
@@ -88,19 +97,9 @@ game_default_level :: proc() {
 		transform = {pos = {0, 0, -10}, rot = {0, 0, 0}, scale = 1},
 		geom = capsule(material = .Test),
 		phys = {layer = .Layer1, mask = .Mask0},
-		health = t.DEFAULT_HEALTH
+		health = t.DEFAULT_HEALTH,
 	}
 	world_spawn(&opponent_1)
-	
-	player := Entity_Player {
-		transform = {pos = {-3, 0, -1}, rot = {0, 0, 0}, scale = 1},
-		geom = capsule(material = .Test),
-		speed = 10,
-		phys = {layer= .Layer1, mask = .Mask1},
-		face_dir = {1, 0, 0},
-	}
-	world_spawn(&player)
-
 
 	// capsule := Entity_Mesh {
 	//     transform = { pos ={3, 0, -1}, rot={0, 0, 0}, scale=1 },

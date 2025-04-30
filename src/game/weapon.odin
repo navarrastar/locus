@@ -5,7 +5,7 @@ import "core:time"
 // import sdl "vendor:sdl3"
 
 WEAPON_FIREBALL_SPEED :: 30
-WEAPON_FIREBALL_DAMAGE :: 10
+WEAPON_FIREBALL_DAMAGE :: 50
 WEAPON_FIREBALL_COOLDOWN :: time.Second
 WEAPON_FIREBALL_SIZE :: 2
 
@@ -69,6 +69,7 @@ weapon_use :: proc(weapon: ^Weapon, eid: eID) -> (activated: bool) {
 				},
 				geom = sphere(material = .Test),
 				speed = weap.speed,
+				damage = WEAPON_FIREBALL_DAMAGE,
 				velocity = player.face_dir,
 				phys = {layer = .Layer0, mask = .Mask0},
 			}

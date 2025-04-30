@@ -74,44 +74,40 @@ ui_show_general_panel :: proc() {
     if im.Begin("General") {
         if im.CollapsingHeader("Entities") {
             for &e in world.entities {
-                switch v in e {
+                switch &v in e {
                 case EntityBase:
                     
                 case Entity_Player:
-                    player := &e.(Entity_Player)
                     if im.CollapsingHeader("Player"){
-                        eid := strings.clone_to_cstring(fmt.tprintf("eid:{}", player.eid), context.temp_allocator)
+                        eid := strings.clone_to_cstring(fmt.tprintf("eid:{}", v.eid), context.temp_allocator)
                         im.Text(eid)
-                        im.DragFloat3("Position", &player.pos)
-                        im.DragFloat3("Rotation", &player.rot)
+                        im.DragFloat3("Position", &v.pos)
+                        im.DragFloat3("Rotation", &v.rot)
                     }
                 case Entity_Opp:
-                    opp := &e.(Entity_Opp)
-                        if opp.name == "" do continue
-                        if im.CollapsingHeader(strings.clone_to_cstring(opp.name, context.temp_allocator)) {
-                            eid := strings.clone_to_cstring(fmt.tprintf("eid:{}", opp.eid), context.temp_allocator)
+                        if v.name == "" do continue
+                        if im.CollapsingHeader(strings.clone_to_cstring(v.name, context.temp_allocator)) {
+                            eid := strings.clone_to_cstring(fmt.tprintf("eid:{}", v.eid), context.temp_allocator)
                             im.Text(eid)
-                            im.DragFloat3("Position", &opp.pos)
-                            im.DragFloat3("Rotation", &opp.rot)
+                            im.DragFloat3("Position", &v.pos)
+                            im.DragFloat3("Rotation", &v.rot)
                         }
                 
                 case Entity_Mesh:
-                    mesh := &e.(Entity_Mesh)
-                        if mesh.name == "" do continue
-                        if im.CollapsingHeader(strings.clone_to_cstring(mesh.name, context.temp_allocator)) {
-                            eid := strings.clone_to_cstring(fmt.tprintf("eid:{}", mesh.eid), context.temp_allocator)
+                        if v.name == "" do continue
+                        if im.CollapsingHeader(strings.clone_to_cstring(v.name, context.temp_allocator)) {
+                            eid := strings.clone_to_cstring(fmt.tprintf("eid:{}", v.eid), context.temp_allocator)
                             im.Text(eid)
-                            im.DragFloat3("Position", &mesh.pos)
-                            im.DragFloat3("Rotation", &mesh.rot)
+                            im.DragFloat3("Position", &v.pos)
+                            im.DragFloat3("Rotation", &v.rot)
                         }
                 case Entity_Camera:
-                    cam := &e.(Entity_Camera)
-                    if cam.name == "" do continue
-                    if im.CollapsingHeader(strings.clone_to_cstring(cam.name, context.temp_allocator)){
-                        eid := strings.clone_to_cstring(fmt.tprintf("eid:{}", cam.eid), context.temp_allocator)
+                    if v.name == "" do continue
+                    if im.CollapsingHeader(strings.clone_to_cstring(v.name, context.temp_allocator)){
+                        eid := strings.clone_to_cstring(fmt.tprintf("eid:{}", v.eid), context.temp_allocator)
                         im.Text(eid)
-                        im.DragFloat3("Position", &cam.pos)
-                        im.DragFloat3("Target", &cam.target)
+                        im.DragFloat3("Position", &v.pos)
+                        im.DragFloat3("Target", &v.target)
                     }
                 case Entity_Projectile:
                 

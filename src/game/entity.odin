@@ -51,13 +51,21 @@ Entity_Camera :: struct {
 
 Entity_Opp :: struct {
     using base: EntityBase,
-    inventory:  ^Inventory,
+    inventory:  Inventory,
     health:     t.Health
+}
+
+opp_take_damage :: proc(eid: eID, damage: f32) {
+    opp := &world.entities[eid].(Entity_Opp)
+    opp.health.current -= damage
+    if opp.health.current <= 0 do world_destroy(opp^)
 }
 
 Entity_Projectile :: struct {
     using base: EntityBase,
-    speed: f32,
+    speed:    f32,
+    damage:   f32,
+    collided: CollidedWith
 }
 
 get_base :: proc(eid: eID) -> ^EntityBase {
