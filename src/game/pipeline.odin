@@ -11,7 +11,7 @@ import m "../math"
 
 
 
-pipeline_bind :: proc(render_pass: ^sdl.GPURenderPass, geom: ^Geometry) {
+pipeline_bind :: proc(render_pass: ^sdl.GPURenderPass, geom: Geometry) {
     sdl.BindGPUGraphicsPipeline(render_pass, materials[geom.material_type].pipeline)
     
     pipeline_push_buffers(geom.material_type)
@@ -25,7 +25,7 @@ pipeline_bind :: proc(render_pass: ^sdl.GPURenderPass, geom: ^Geometry) {
 pipeline_push_buffers :: proc(type: MaterialType) {
     switch type {
     case .Default, .Grid:
-        active_camera := world.cameras[0]
+        active_camera := world_camera()
         
         world_buffer: GPUWorldBuffer
         world_buffer.view = m.look_at(active_camera.transform.pos, active_camera.target, active_camera.up)

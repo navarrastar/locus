@@ -1,33 +1,124 @@
 package game
 
-import "core:log"
-
 import "../stack"
 import m "../math"
 
 World :: struct {
-    player: Entity_Player,
-    
-    opps: [16]Entity_Opp,
-    opp_count: u8,
-    
-    cameras: [16]Entity_Camera,
-    camera_count: u8,
-    
-    meshes: [128]Entity_Mesh,
-    mesh_count: u8,
-    
-    projectiles: [256]Entity_Projectile,
-    projectile_count: u8
+    entities: [1024]Entity,
+    entity_count: eID
 }
 
-_freed_opp_stack:        stack.Stack(u8)
-_freed_camera_stack:     stack.Stack(u8)
-_freed_mesh_stack:       stack.Stack(u8)
-_freed_projectile_stack: stack.Stack(u8)
+_freed_eid_stack: stack.Stack(eID)
 
-world_init :: proc() {
+world_spawn :: proc { 
+    spawn_base,
+    spawn_player,
+    spawn_opp,
+    spawn_camera,
+    spawn_mesh,
+    spawn_projectile,
+}
+
+spawn_base :: proc(base: ^EntityBase) {
+    base.eid = 0
+    world.entities[0]= base^
+    world.entity_count += 1
+}
+
+spawn_player :: proc(player: ^Entity_Player) {
+    setup_player(player)
+    player.eid = _freed_eid_stack.len > 0 ? stack.pop(&_freed_eid_stack) : world.entity_count
+    world.entities[player.eid] = player^
+    world.entity_count += 1
+}
+
+spawn_opp :: proc(opp: ^Entity_Opp) {
+    opp.eid = _freed_eid_stack.len > 0 ? stack.pop(&_freed_eid_stack) : world.entity_count
+    world.entities[opp.eid] = opp^
+    world.entity_count += 1
+}
+
+spawn_camera :: proc(camera: ^Entity_Camera) {
+    camera.eid = _freed_eid_stack.len > 0 ? stack.pop(&_freed_eid_stack) : world.entity_count
+    world.entities[camera.eid] = camera^
+    world.entity_count += 1 
+}
+
+spawn_mesh :: proc(mesh: ^Entity_Mesh) {
+    mesh.eid = _freed_eid_stack.len > 0 ? stack.pop(&_freed_eid_stack) : world.entity_count
+    world.entities[mesh.eid] = mesh^
+    world.entity_count += 1 
+}
+
+spawn_projectile :: proc(p: ^Entity_Projectile) {
+    p.eid = _freed_eid_stack.len > 0 ? stack.pop(&_freed_eid_stack) : world.entity_count
+    world.entities[p.eid] = p^
+    world.entity_count += 1 
+}
+
+world_destroy :: proc {
+    destroy_player,
+    destroy_opp,
+    destroy_camera,
+    destroy_mesh,
+    destroy_projectile,
+}
+
+destroy_player :: proc() {
+    cleanup_player()
+}
+
+destroy_opp :: proc(opp: Entity_Opp) {
+    stack.push(&_freed_eid_stack, opp.eid)
+    world.entities[opp.eid] = {}
+    world.entity_count -= 1
+}
+
+destroy_camera :: proc(camera: Entity_Camera) {
+    stack.push(&_freed_eid_stack, camera.eid)
+    world.entities[camera.eid] = {}
+    world.entity_count -= 1
+}
+
+destroy_mesh :: proc(mesh: Entity_Mesh) {
+    stack.push(&_freed_eid_stack, mesh.eid)
+    world.entities[mesh.eid] = {}
+    world.entity_count -= 1
+}
+
+destroy_projectile :: proc(p: Entity_Projectile) { 
+    stack.push(&_freed_eid_stack, p.eid)
+    world.entities[p.eid] = {}
+    world.entity_count -= 1
+}
+
+world_update_entity :: proc(e: ^Entity) {
+    base := cast(^EntityBase)e
+    base.geom.model_matrix = m.to_matrix(base.transform)
     
+    switch v in e {
+    case EntityBase:
+    
+    case Entity_Player:
+    
+    case Entity_Opp:
+    
+    case Entity_Mesh:
+    
+    case Entity_Camera:
+    
+    case Entity_Projectile:
+        projectile_update(&e.(Entity_Projectile))
+    }
+}
+
+world_camera :: proc() -> Entity_Camera {
+    for e in world.entities {
+        if cam, ok := e.(Entity_Camera); ok {
+            return cam
+        }
+    }
+    panic("")
 }
 
 world_in_bounds :: proc(pos: m.Vec3) -> bool {
@@ -44,75 +135,12 @@ world_in_bounds :: proc(pos: m.Vec3) -> bool {
     return true
 }
 
-world_spawn :: proc { 
-    spawn_player,
-    spawn_opp,
-    spawn_camera,
-    spawn_mesh,
-    spawn_projectile,
-}
-
-spawn_player :: proc(player: ^Entity_Player) {
-    player_setup(player)
-    world.player = player^
-}
-
-spawn_opp :: proc(opp: ^Entity_Opp) {
-    opp.idx = _freed_opp_stack.len > 0 ? stack.pop(&_freed_opp_stack) : world.opp_count
-    world.opps[opp.idx] = opp^
-    world.opp_count += 1 
-}
-
-spawn_camera :: proc(camera: ^Entity_Camera) {
-    camera.idx = _freed_camera_stack.len > 0 ? stack.pop(&_freed_camera_stack) : world.camera_count
-    world.cameras[camera.idx] = camera^
-    world.camera_count += 1 
-}
-
-spawn_mesh :: proc(mesh: ^Entity_Mesh) {
-    mesh.idx = _freed_mesh_stack.len > 0 ? stack.pop(&_freed_mesh_stack) : world.mesh_count
-    world.meshes[mesh.idx] = mesh^
-    world.mesh_count += 1 
-}
-
-spawn_projectile :: proc(p: ^Entity_Projectile) {
-    p.idx = _freed_projectile_stack.len > 0 ? stack.pop(&_freed_projectile_stack) : world.projectile_count
-    world.projectiles[p.idx] = p^
-    world.projectile_count += 1 
-}
-
-world_destroy :: proc {
-    destroy_player,
-    destroy_opp,
-    destroy_camera,
-    destroy_mesh,
-    destroy_projectile,
-}
-
-destroy_player :: proc() {
-    player_cleanup()
-}
-
-destroy_opp :: proc(opp: Entity_Opp) {
-    stack.push(&_freed_opp_stack, opp.idx)
-    world.opps[opp.idx] = {}
-    world.opp_count -= 1
-}
-
-destroy_camera :: proc(camera: Entity_Camera) {
-    stack.push(&_freed_camera_stack, camera.idx)
-    world.cameras[camera.idx] = {}
-    world.camera_count -= 1
-}
-
-destroy_mesh :: proc(mesh: Entity_Mesh) {
-    stack.push(&_freed_mesh_stack, mesh.idx)
-    world.meshes[mesh.idx] = {}
-    world.mesh_count -= 1
-}
-
-destroy_projectile :: proc(p: Entity_Projectile) { 
-    stack.push(&_freed_projectile_stack, p.idx)
-    world.projectiles[p.idx] = {}
-    world.projectile_count -= 1
+world_get_player :: proc() -> ^Entity_Player {
+    for &e in world.entities {
+        #partial switch v in e {
+        case Entity_Player:
+            return &e.(Entity_Player)
+        }
+    }
+    panic("")
 }

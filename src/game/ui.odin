@@ -1,5 +1,6 @@
 package game
 
+import "core:fmt"
 import "core:strings"
 
 import sdl "vendor:sdl3"
@@ -72,32 +73,52 @@ ui_toggle_visibility :: proc(panel: UIPanelSet) {
 ui_show_general_panel :: proc() {
     if im.Begin("General") {
         if im.CollapsingHeader("Entities") {
-            if im.CollapsingHeader("Camera"){
-                im.DragFloat3("Position", &world.cameras[0].pos)
-                im.DragFloat3("Target", &world.cameras[0].target)
-            }
-            if im.CollapsingHeader("Player"){
-                im.DragFloat3("Position", &world.player.pos)
-                im.DragFloat3("Rotation", &world.player.rot)
-            }
-            if im.CollapsingHeader("Meshes") {
-                for &mesh in world.meshes {
-                    if mesh.name == "" do continue
-                    if im.CollapsingHeader(strings.clone_to_cstring(mesh.name, context.temp_allocator)) {
-                        im.DragFloat3("Position", &mesh.pos)
-                        im.DragFloat3("Rotation", &mesh.rot)
+            for &e in world.entities {
+                switch v in e {
+                case EntityBase:
+                    
+                case Entity_Player:
+                    player := &e.(Entity_Player)
+                    if im.CollapsingHeader("Player"){
+                        eid := strings.clone_to_cstring(fmt.tprintf("eid:{}", player.eid), context.temp_allocator)
+                        im.Text(eid)
+                        im.DragFloat3("Position", &player.pos)
+                        im.DragFloat3("Rotation", &player.rot)
                     }
+                case Entity_Opp:
+                    opp := &e.(Entity_Opp)
+                        if opp.name == "" do continue
+                        if im.CollapsingHeader(strings.clone_to_cstring(opp.name, context.temp_allocator)) {
+                            eid := strings.clone_to_cstring(fmt.tprintf("eid:{}", opp.eid), context.temp_allocator)
+                            im.Text(eid)
+                            im.DragFloat3("Position", &opp.pos)
+                            im.DragFloat3("Rotation", &opp.rot)
+                        }
+                
+                case Entity_Mesh:
+                    mesh := &e.(Entity_Mesh)
+                        if mesh.name == "" do continue
+                        if im.CollapsingHeader(strings.clone_to_cstring(mesh.name, context.temp_allocator)) {
+                            eid := strings.clone_to_cstring(fmt.tprintf("eid:{}", mesh.eid), context.temp_allocator)
+                            im.Text(eid)
+                            im.DragFloat3("Position", &mesh.pos)
+                            im.DragFloat3("Rotation", &mesh.rot)
+                        }
+                case Entity_Camera:
+                    cam := &e.(Entity_Camera)
+                    if cam.name == "" do continue
+                    if im.CollapsingHeader(strings.clone_to_cstring(cam.name, context.temp_allocator)){
+                        eid := strings.clone_to_cstring(fmt.tprintf("eid:{}", cam.eid), context.temp_allocator)
+                        im.Text(eid)
+                        im.DragFloat3("Position", &cam.pos)
+                        im.DragFloat3("Target", &cam.target)
+                    }
+                case Entity_Projectile:
+                
                 }
             }
-            if im.CollapsingHeader("Opponents") {
-                for &opponent in world.opps {
-                    if opponent.name == "" do continue
-                    if im.CollapsingHeader(strings.clone_to_cstring(opponent.name, context.temp_allocator)) {
-                        im.DragFloat3("Position", &opponent.pos)
-                        im.DragFloat3("Rotation", &opponent.rot)
-                    }
-                }
-            }
+ 
+
         }
     }
     

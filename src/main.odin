@@ -4,14 +4,10 @@ import "core:log"
 
 import "game"
 
-
-
 main :: proc() {
-	when ODIN_DEBUG {
-		context.logger = log.create_console_logger(
-			opt = log.Options{.Level, .Terminal_Color, .Short_File_Path, .Line, .Time},
-		)
-	}
+	context.logger = log.create_console_logger(
+		opt = log.Options{.Level, .Terminal_Color, .Short_File_Path, .Line, .Time},
+	)
 	
 	game.init()
 	defer game.cleanup()

@@ -1,8 +1,6 @@
 package game
 
-import "core:container/small_array"
-import "core:fmt"
-import "core:log"
+import sa "core:container/small_array"
 
 import m "../math"
 
@@ -10,31 +8,53 @@ import m "../math"
 X_AXIS :: m.Vec3{1, 0, 0}
 
 Physics :: struct {
-    layer: enum { LAYER_0, LAYER_1 }
+	layer: enum u8 {
+		None,
+		Layer0,
+		Layer1,
+	},
+	mask:  enum u8 {
+		None,
+		Mask0,
+		Mask1,
+	},
 }
 
-Simplex :: small_array.Small_Array(4, m.Vec3)
+Simplex :: sa.Small_Array(4, m.Vec3)
+CollidedWith :: sa.Small_Array(10, eID)
+
+phys_check_collisions :: proc(in_base: ^EntityBase, ids: ^CollidedWith) {
+	assert(in_base.phys.layer != .None)
+	for &e in world.entities {
+		base := cast(^EntityBase)&e
+		if base.eid == in_base.eid do continue // skips checking for collision with itself
+
+		if phys_overlapping(in_base, base) {
+			sa.append(ids, base.eid)
+		}
+	}
+}
 
 // Using the GJK algorithm
-phys_overlapping :: proc(e1, e2: ^Entity) -> (is_overlapping: bool) {
-    (e1.physics.layer == e2.physics.layer) or_return
-    
-    shape1 := make([]Pos, e1.geometry.vertex_count)
-	shape2 := make([]Pos, e2.geometry.vertex_count)
+phys_overlapping :: proc(e1, e2: ^EntityBase) -> (is_overlapping: bool) {
+	(phys_collidable(e1, e2)) or_return
+
+	shape1 := make([]Pos, e1.geom.vertex_count)
+	shape2 := make([]Pos, e2.geom.vertex_count)
 
 	defer delete(shape1)
 	defer delete(shape2)
 
-	e1.geometry.model_matrix = m.to_matrix(e1.transform)
-	e2.geometry.model_matrix = m.to_matrix(e2.transform)
+	e1.geom.model_matrix = m.to_matrix(e1.transform)
+	e2.geom.model_matrix = m.to_matrix(e2.transform)
 
-	phys_get_positions(e1.geometry, shape1)
-	phys_get_positions(e2.geometry, shape2)
+	phys_get_positions(e1.geom, shape1)
+	phys_get_positions(e2.geom, shape2)
 
 	support := _support(shape1, shape2, X_AXIS)
 
 	simplex: Simplex
-	small_array.push_front(&simplex, support)
+	sa.push_front(&simplex, support)
 
 	dir := -support
 
@@ -42,7 +62,7 @@ phys_overlapping :: proc(e1, e2: ^Entity) -> (is_overlapping: bool) {
 		support = _support(shape1, shape2, dir)
 		if m.dot(support, dir) < 0 do return false
 
-		small_array.push_front(&simplex, support)
+		sa.push_front(&simplex, support)
 
 		if _next_simplex(&simplex, &dir) do return true
 	}
@@ -68,6 +88,14 @@ phys_get_positions :: proc(geom: Geometry, shape: []Pos) {
 	}
 }
 
+phys_collidable :: proc(e1, e2: ^EntityBase) -> bool {
+	(e1.phys.layer != .None) or_return
+	(e2.phys.layer != .None) or_return
+	(u8(e1.phys.layer) == u8(e2.phys.mask) || u8(e2.phys.layer) == u8(e1.phys.mask)) or_return
+
+	return true
+}
+
 _furthest_vertex :: proc(shape: []Pos, dir: m.Vec3) -> (furthest_vertex: Pos) {
 	furthest_distance := min(f32)
 	for v in shape {
@@ -85,7 +113,7 @@ _support :: proc(shape1, shape2: []Pos, dir: m.Vec3) -> Pos {
 }
 
 _next_simplex :: proc(simplex: ^Simplex, dir: ^m.Vec3) -> bool {
-	switch small_array.len(simplex^) {
+	switch sa.len(simplex^) {
 	case 2:
 		return _check_line(simplex, dir)
 	case 3:
@@ -97,8 +125,8 @@ _next_simplex :: proc(simplex: ^Simplex, dir: ^m.Vec3) -> bool {
 }
 
 _check_line :: proc(simplex: ^Simplex, dir: ^m.Vec3) -> bool {
-	a := small_array.get(simplex^, 0)
-	b := small_array.get(simplex^, 1)
+	a := sa.get(simplex^, 0)
+	b := sa.get(simplex^, 1)
 
 	ab := b - a
 	ao := -a
@@ -106,8 +134,8 @@ _check_line :: proc(simplex: ^Simplex, dir: ^m.Vec3) -> bool {
 	if m.same_dir(ab, ao) {
 		dir^ = m.cross(m.cross(ab, ao), ab)
 	} else {
-		small_array.clear(simplex)
-		small_array.append_elems(simplex, a)
+		sa.clear(simplex)
+		sa.append_elems(simplex, a)
 		dir^ = ao
 	}
 
@@ -115,9 +143,9 @@ _check_line :: proc(simplex: ^Simplex, dir: ^m.Vec3) -> bool {
 }
 
 _check_triangle :: proc(simplex: ^Simplex, dir: ^m.Vec3) -> bool {
-	a := small_array.get(simplex^, 0)
-	b := small_array.get(simplex^, 1)
-	c := small_array.get(simplex^, 2)
+	a := sa.get(simplex^, 0)
+	b := sa.get(simplex^, 1)
+	c := sa.get(simplex^, 2)
 
 	ab := b - a
 	ac := c - a
@@ -127,25 +155,25 @@ _check_triangle :: proc(simplex: ^Simplex, dir: ^m.Vec3) -> bool {
 
 	if m.same_dir(m.cross(abc, ac), ao) {
 		if (m.same_dir(ac, ao)) {
-			small_array.clear(simplex)
-			small_array.append_elems(simplex, a, c)
+			sa.clear(simplex)
+			sa.append_elems(simplex, a, c)
 			dir^ = m.cross(m.cross(ac, ao), ac)
 		} else {
-			small_array.clear(simplex)
-			small_array.append_elems(simplex, a, b)
+			sa.clear(simplex)
+			sa.append_elems(simplex, a, b)
 			return _check_line(simplex, dir)
 		}
 	} else {
 		if m.same_dir(m.cross(ab, abc), ao) {
-			small_array.clear(simplex)
-			small_array.append_elems(simplex, a, b)
+			sa.clear(simplex)
+			sa.append_elems(simplex, a, b)
 			return _check_line(simplex, dir)
 		} else {
 			if m.same_dir(abc, ao) {
 				dir^ = abc
 			} else {
-				small_array.clear(simplex)
-				small_array.append_elems(simplex, a, c, b)
+				sa.clear(simplex)
+				sa.append_elems(simplex, a, c, b)
 				dir^ = -abc
 			}
 		}
@@ -154,10 +182,10 @@ _check_triangle :: proc(simplex: ^Simplex, dir: ^m.Vec3) -> bool {
 }
 
 _check_tetrahedron :: proc(simplex: ^Simplex, dir: ^m.Vec3) -> bool {
-	a := small_array.get(simplex^, 0)
-	b := small_array.get(simplex^, 1)
-	c := small_array.get(simplex^, 2)
-	d := small_array.get(simplex^, 3)
+	a := sa.get(simplex^, 0)
+	b := sa.get(simplex^, 1)
+	c := sa.get(simplex^, 2)
+	d := sa.get(simplex^, 3)
 
 	ab := b - a
 	ac := c - a
@@ -169,20 +197,20 @@ _check_tetrahedron :: proc(simplex: ^Simplex, dir: ^m.Vec3) -> bool {
 	adb := m.cross(ad, ab)
 
 	if m.same_dir(abc, ao) {
-		small_array.clear(simplex)
-		small_array.append_elems(simplex, a, b, c)
+		sa.clear(simplex)
+		sa.append_elems(simplex, a, b, c)
 		return _check_triangle(simplex, dir)
 	}
 
 	if m.same_dir(acd, ao) {
-		small_array.clear(simplex)
-		small_array.append_elems(simplex, a, c, d)
+		sa.clear(simplex)
+		sa.append_elems(simplex, a, c, d)
 		return _check_triangle(simplex, dir)
 	}
 
 	if m.same_dir(adb, ao) {
-		small_array.clear(simplex)
-		small_array.append_elems(simplex, a, d, b)
+		sa.clear(simplex)
+		sa.append_elems(simplex, a, d, b)
 		return _check_triangle(simplex, dir)
 	}
 

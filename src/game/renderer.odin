@@ -6,11 +6,10 @@ import im "shared:imgui"
 import im_sdlgpu "shared:imgui/imgui_impl_sdlgpu3"
 import sdl "vendor:sdl3"
 
-import m "../math"
-
 NEAR_PLANE :: 0.001
 FAR_PLANE :: 1000
 DEPTH_STENCIL_FORMAT :: sdl.GPUTextureFormat.D32_FLOAT_S8_UINT
+
 
 
 RenderState :: struct {
@@ -50,26 +49,9 @@ renderer_end_cmd_buffer :: proc() {
 	assert(sdl.SubmitGPUCommandBuffer(render_state.cmd_buffer))
 }
 
-renderer_cleanup :: proc() {
-	free(&render_state)
-}
-
-
-
-/* DRAW */
-
-renderer_draw :: proc {
-	renderer_draw_world,
-	renderer_draw_entity,
-	renderer_draw_geometry,
-}
-
-renderer_draw_world :: proc() {
-    
-
-	
+renderer_begin_pass :: proc() -> ^sdl.GPURenderPass {
 	renderer_update_swapchain_texture()
-	if render_state.swapchain_texture == nil do return
+	if render_state.swapchain_texture == nil do return nil
 
 	color_target := sdl.GPUColorTargetInfo {
 		texture     = render_state.swapchain_texture,
@@ -84,58 +66,41 @@ renderer_draw_world :: proc() {
 		clear_depth = 1,
 		store_op    = .DONT_CARE,
 	}
-	render_pass := sdl.BeginGPURenderPass(
-		render_state.cmd_buffer,
-		&color_target,
+	return sdl.BeginGPURenderPass(render_state.cmd_buffer, &color_target, 1, &depth_target_info)
+}
+
+renderer_end_pass :: proc(pass: ^sdl.GPURenderPass) {
+	sdl.EndGPURenderPass(pass)
+}
+
+renderer_cleanup :: proc() {
+	free(&render_state)
+}
+
+
+/* DRAW */
+
+renderer_draw_entity :: proc(pass: ^sdl.GPURenderPass, base: ^EntityBase) {
+	if base.geom.vertex_count == 0 do return
+	if (base.geom.vertex_buffer == nil) {
+		renderer_setup_vertex_buffer(&base.geom)
+	}
+	if (materials[base.geom.material_type].pipeline == nil) {
+		material_create(base.geom.material_type)
+	}
+
+	pipeline_bind(pass, base.geom)
+
+	sdl.BindGPUVertexBuffers(
+		pass,
+		0,
+		&sdl.GPUBufferBinding{buffer = base.geom.vertex_buffer},
 		1,
-		&depth_target_info,
 	)
 
-	
-	if len(world.player.geometry.vertices) != 0 {
-		renderer_draw(render_pass, &world.player)
-	}
-	for &opponent in world.opps {
-		if len(opponent.geometry.vertices) == 0 do continue
-		renderer_draw(render_pass, &opponent)
-	}
-	for &camera in world.cameras {
-		if len(camera.geometry.vertices) == 0 do continue
-		renderer_draw(render_pass, &camera)
-	}
-	for &mesh in world.meshes {
-		if len(mesh.geometry.vertices) == 0 do continue
-		renderer_draw(render_pass, &mesh)
-	}
-	for &projectile in world.projectiles {
-	    if len(projectile.geometry.vertices) == 0 do continue
-		renderer_draw(render_pass, &projectile)
-	}
-
-	sdl.EndGPURenderPass(render_pass)
+	sdl.DrawGPUPrimitives(pass, base.geom.vertex_count, 1, 0, 0)
 }
 
-renderer_draw_entity :: proc(render_pass: ^sdl.GPURenderPass, entity: ^Entity) {
-	entity.geometry.model_matrix = m.to_matrix(entity.transform)
-	renderer_draw(render_pass, &entity.geometry)
-}
-
-renderer_draw_geometry :: proc(render_pass: ^sdl.GPURenderPass, geom: ^Geometry) {
-	if (geom.vertex_buffer == nil) {
-		renderer_setup_vertex_buffer(geom)
-	}
-	if (materials[geom.material_type].pipeline == nil) {
-	    material_create(geom.material_type)
-	}
-
-	pipeline_bind(render_pass, geom)
-
-	sdl.BindGPUVertexBuffers(render_pass, 0, &sdl.GPUBufferBinding{buffer = geom.vertex_buffer}, 1)
-
-
-	sdl.DrawGPUPrimitives(render_pass, geom.vertex_count, 1, 0, 0)
-}
- 
 renderer_draw_ui :: proc(ui_draw_data: ^im.DrawData) {
 	if ui_draw_data == nil do return
 	im_sdlgpu.PrepareDrawData(ui_draw_data, render_state.cmd_buffer)
@@ -155,10 +120,16 @@ renderer_draw_ui :: proc(ui_draw_data: ^im.DrawData) {
 
 renderer_setup_vertex_buffer :: proc(geom: ^Geometry) {
 	vertices_size := geom.vertex_size * geom.vertex_count
-	vertex_buffer := sdl.CreateGPUBuffer(render_state.gpu, {usage = {.VERTEX}, size = vertices_size})
+	vertex_buffer := sdl.CreateGPUBuffer(
+		render_state.gpu,
+		{usage = {.VERTEX}, size = vertices_size},
+	)
 	assert(vertex_buffer != nil, string(sdl.GetError()))
 
-	transfer_buffer := sdl.CreateGPUTransferBuffer(render_state.gpu, {usage = .UPLOAD, size = vertices_size})
+	transfer_buffer := sdl.CreateGPUTransferBuffer(
+		render_state.gpu,
+		{usage = .UPLOAD, size = vertices_size},
+	)
 	assert(transfer_buffer != nil, string(sdl.GetError()))
 
 	transfer_mem := sdl.MapGPUTransferBuffer(render_state.gpu, transfer_buffer, false)

@@ -1,35 +1,48 @@
 package game
 
-import "core:reflect"
 import "base:builtin"
 
 import m "../math"
+import t "../types"
 
+eID :: u64
 
+// Every variant MUST begin with "using base: EntityBase"
+// because this is a common operation: 
+// cast(^EntityBase)&entity
+Entity :: union {
+    EntityBase,
+    Entity_Player,
+    Entity_Opp,
+    Entity_Mesh,
+    Entity_Camera,
+    Entity_Projectile
+}
 
-Entity :: struct {
+EntityBase :: struct {
     using transform: m.Transform,
-    idx:      u8,
+    eid:      eID,
+    parent:   eID,
     name:     string,
-    geometry: Geometry,
-    physics:  Physics,
+    geom:     Geometry,
+    phys:     Physics,
     velocity: m.Vec3,
 }
 
 Entity_Player :: struct {
-    using entity: Entity,
-    inventory:  ^Inventory,
+    using base: EntityBase,
+    inventory:  Inventory,
     wish_dir:   m.Vec3,
     face_dir:   m.Vec3,
     speed: f32
 }
 
 Entity_Mesh :: struct {
-    using entity: Entity,
+    using base: EntityBase,
 }
 
 Entity_Camera :: struct {
-    using entity: Entity,
+    using base: EntityBase,
     target: m.Vec3,
     up: m.Vec3,
     fovy: f32,
@@ -37,12 +50,16 @@ Entity_Camera :: struct {
 }
 
 Entity_Opp :: struct {
-    using entity: Entity,
+    using base: EntityBase,
     inventory:  ^Inventory,
+    health:     t.Health
 }
 
 Entity_Projectile :: struct {
-    using entity: Entity,
+    using base: EntityBase,
     speed: f32,
 }
 
+get_base :: proc(eid: eID) -> ^EntityBase {
+    return cast(^EntityBase)&world.entities[eid]
+}
