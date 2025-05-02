@@ -14,7 +14,6 @@ init :: proc() {
 	window_state = new(WindowState)
 	render_state = new(RenderState)
 	ui_state = new(UIState)
-	every_vertex = make([dynamic]f32)
 
 	window_init(context)
 	renderer_init()
@@ -41,18 +40,14 @@ update :: proc() {
 	renderer_begin_cmd_buffer()
 	pass := renderer_begin_pass()
 
-	if .None in ui_state.visible_panels {
-		update_player()
-		player := world_get_player()
-		renderer_draw_entity(pass, &player.base)
-
-		for &entity in world.entities {
+	for &entity in world.entities {
+		if .None in ui_state.visible_panels {
 			world_update_entity(&entity)
-
-			base := cast(^EntityBase)&entity
-			renderer_draw_entity(pass, base)
 		}
+		base := cast(^EntityBase)&entity
+		renderer_draw_entity(pass, base)
 	}
+
 
 	renderer_end_pass(pass)
 
@@ -65,7 +60,6 @@ update :: proc() {
 }
 
 cleanup :: proc() {
-	free(&every_vertex)
 	free(ui_state)
 	free(render_state)
 	free(window_state)
@@ -78,34 +72,37 @@ should_shutdown :: proc() -> bool {
 
 game_default_level :: proc() {
    	player := Entity_Player {
-		transform = {pos = {-3, 0, -1}, rot = {0, 0, 0}, scale = 1},
-		geom = capsule(material = .Test),
+		transform = {pos = {-3, 0, -1}, rot = {0, 0, 0}, scale = 2},
+		geom = mesh("michelle"),
 		speed = 10,
-		phys = {layer = .Layer1, mask = .Mask1},
+		phys = {layer = {.Layer0}, mask = {.Mask0}},
 		face_dir = {1, 0, 0},
 	}
 	world_spawn(&player)
 	
+	michelle := Entity_Opp {
+		name = "michelle",
+		transform = {pos = {0, 0, -10}, rot = {0, 0, 0}, scale = 2},
+		geom = mesh("michelle"),
+		health = t.DEFAULT_HEALTH,
+		phys = {layer = {.Layer0}, mask = {.Mask0}},
+	}
+	world_spawn(&michelle)
+
+
+
 	grid := Entity_Mesh {
 		transform = m.DEFAULT_TRANSFORM,
 		geom      = grid(color = {0.4, 0.84, 0.9, 1}),
 	}
 	world_spawn(&grid)
 
-	opponent_1 := Entity_Opp {
-		name = "opp_0",
-		transform = {pos = {0, 0, -10}, rot = {0, 0, 0}, scale = 1},
-		geom = capsule(material = .Test),
-		phys = {layer = .Layer1, mask = .Mask0},
-		health = t.DEFAULT_HEALTH,
-	}
-	world_spawn(&opponent_1)
 
 	// capsule := Entity_Mesh {
 	//     transform = { pos ={3, 0, -1}, rot={0, 0, 0}, scale=1 },
-	//     geometry = capsule(color=COLOR_ORANGE, material=.Test)
+	//     geom = capsule(color=COLOR_ORANGE, material=.Test)
 	// }
-	// world_spawn(capsule)
+	// world_spawn(&capsule)
 
 	// random_rectangle := Entity_Mesh {
 	//     transform = { pos={3, 0, -1}, rot={0, 0, 0}, scale=1 },
@@ -125,13 +122,14 @@ game_default_level :: proc() {
 	// }
 	// world_spawn(default_box)
 
-	// random_triangle := Entity_Mesh {
-	//     transform = { pos={3, 0, -10}, rot={0, 0, 0}, scale=1 },
-	//     geometry = triangle({0, -1, -1}, {1, 0, -1}, {0.5, 1, -1}, {0, 0, 1, 1})
-	// }
-	// world_spawn(random_triangle)
+	random_triangle := Entity_Mesh {
+	    transform = { pos={0, 0, -5}, rot={0, 0, 0}, scale=1 },
+	    geom = triangle(),
+	}
+	world_spawn(&random_triangle)
 
 	camera := Entity_Camera {
+		name = "cam",
 		target = {0, 0, -4},
 		transform = {pos = {0, 12, 2}, rot = {0, 0, 0}, scale = 1},
 		up = {0.0, 1.0, 0.0},

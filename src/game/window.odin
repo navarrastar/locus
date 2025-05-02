@@ -4,7 +4,7 @@ import "core:log"
 import "base:runtime"
 
 import sdl "vendor:sdl3"
-import im_sdl "shared:imgui/imgui_impl_sdl3"
+import im_sdl "../../third_party/imgui/imgui_impl_sdl3"
 
 WINDOW_START_WIDTH  :: 1280
 WINDOW_START_HEIGHT :: 720

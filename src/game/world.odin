@@ -1,6 +1,6 @@
 package game
 
-import "core:log"
+// import "core:log"
 
 import m "../math"
 import "../stack"
@@ -95,23 +95,23 @@ destroy_projectile :: proc(p: Entity_Projectile) {
 }
 
 world_update_entity :: proc(e: ^Entity) {
-	base := cast(^EntityBase)e
-	base.geom.model_matrix = m.to_matrix(base.transform)
-
 	switch v in e {
 	case EntityBase:
 
 	case Entity_Player:
-
+	    update_player()
 	case Entity_Opp:
-	    log.info(v.health)
+	    // log.info(v.health)
 	case Entity_Mesh:
 
 	case Entity_Camera:
 
 	case Entity_Projectile:
 		projectile_update(&e.(Entity_Projectile))
-	}
+	}	
+	
+	base := cast(^EntityBase)e
+	base.geom.model_matrix = m.to_matrix(base.transform)
 }
 
 world_camera :: proc() -> Entity_Camera {

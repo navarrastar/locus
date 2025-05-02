@@ -5,12 +5,20 @@ package game
 // import sdl "vendor:sdl3"
 import m "../math"
 
+WeaponSlot :: enum {
+	First,
+	Second,
+	Third,
+	Forth,
+	Fifth,
+}
 
 Inventory :: struct {
     weapons: [WeaponSlot]Weapon
 }
 
 setup_player :: proc(player: ^Entity_Player) {
+    player.inventory.weapons[.First] = weapon_scythe()
     player.inventory.weapons[.Third] = weapon_fireball()
 }
 
@@ -47,11 +55,12 @@ set_wish_dir_player :: proc(wish_dir: m.Vec3) {
     player := world_get_player()
     player.wish_dir = player.wish_dir + wish_dir
     if player.wish_dir != {0, 0, 0} do player.face_dir = player.wish_dir
+    
+    yaw := m.atan2(player.face_dir.x, player.face_dir.z)
+    player.rot = {0, yaw, 0}
 }
 
 use_weapon_player :: proc(slot: WeaponSlot) {
     player := world_get_player()
     weapon_use(&player.inventory.weapons[slot], player.eid)
-
-    //log.info("Shooting Fireball", world.player.face_dir)
 }

@@ -26,6 +26,7 @@ EntityBase :: struct {
     name:     string,
     geom:     Geometry,
     phys:     Physics,
+    face_dir: m.Vec3,
     velocity: m.Vec3,
 }
 
@@ -33,7 +34,6 @@ Entity_Player :: struct {
     using base: EntityBase,
     inventory:  Inventory,
     wish_dir:   m.Vec3,
-    face_dir:   m.Vec3,
     speed: f32
 }
 

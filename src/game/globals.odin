@@ -6,6 +6,7 @@ import "core:time"
 import sdl "vendor:sdl3"
 
 SHADER_DIR :: "./assets/shaders/"
+MODEL_DIR :: "./assets/models/"
 
 WORLD_BOUNDS :: 100
 
@@ -21,15 +22,15 @@ dt: f32
 world: ^World
 window_state: ^WindowState
 render_state: ^RenderState
-ui_state:     ^UIState
+ui_state: ^UIState
 
 materials: [MaterialType]Material
 shader_name_to_material_type := map[string]MaterialType {
-    "default" = .Default,
-    "grid"    = .Grid,
-    "capsule" = .Capsule
+	"default" = .Default,
+	"grid"    = .Grid,
+	"capsule" = .Capsule,
+	"test"    = .Test,
+	"mesh"    = .Mesh,
 }
-
-every_vertex: [dynamic]f32
 
 phys_visualize: bool

@@ -7,27 +7,34 @@ import m "../math"
 
 X_AXIS :: m.Vec3{1, 0, 0}
 
+Layer :: enum {
+	None,
+	Layer0,
+	Layer1,
+}
+LayerSet :: bit_set[Layer; u8]
+
+Mask :: enum {
+	None,
+	Mask0,
+	Mask1,
+}
+MaskSet :: bit_set[Mask; u8]
+
 Physics :: struct {
-	layer: enum u8 {
-		None,
-		Layer0,
-		Layer1,
-	},
-	mask:  enum u8 {
-		None,
-		Mask0,
-		Mask1,
-	},
+	layer: LayerSet,
+	mask:  MaskSet,
 }
 
 Simplex :: sa.Small_Array(4, m.Vec3)
 CollidedWith :: sa.Small_Array(10, eID)
 
 phys_check_collisions :: proc(in_base: ^EntityBase, ids: ^CollidedWith) {
-	assert(in_base.phys.layer != .None)
+	assert(in_base.phys.layer != nil)
 	for &e in world.entities {
 		base := cast(^EntityBase)&e
-		if base.eid == in_base.eid do continue // skips checking for collision with itself
+		if base.eid == in_base.eid    do continue // skips checking for collision with itself
+		if base.eid == in_base.parent do continue // skips checking for collision with parent
 
 		if phys_overlapping(in_base, base) {
 			sa.append(ids, base.eid)
@@ -72,7 +79,7 @@ phys_overlapping :: proc(e1, e2: ^EntityBase) -> (is_overlapping: bool) {
 phys_get_positions :: proc(geom: Geometry, shape: []Pos) {
 	assert(len(shape) == int(geom.vertex_count))
 
-	for i in 0 ..< geom.vertex_count {
+	for _, i in 0 ..< geom.vertex_count {
 		vertex_start := i * geom.vertex_stride
 
 		pos := m.Vec4 {
@@ -89,11 +96,18 @@ phys_get_positions :: proc(geom: Geometry, shape: []Pos) {
 }
 
 phys_collidable :: proc(e1, e2: ^EntityBase) -> bool {
-	(e1.phys.layer != .None) or_return
-	(e2.phys.layer != .None) or_return
-	(u8(e1.phys.layer) == u8(e2.phys.mask) || u8(e2.phys.layer) == u8(e1.phys.mask)) or_return
-
-	return true
+	(e1.phys.layer != nil) or_return
+	(e2.phys.layer != nil) or_return
+	
+	layer1_bits := transmute(u8)e1.phys.layer
+	layer2_bits := transmute(u8)e2.phys.layer
+	mask1_bits  := transmute(u8)e1.phys.mask
+	mask2_bits  := transmute(u8)e2.phys.mask
+	
+	if (layer1_bits & mask2_bits) != 0 do return true
+	if (layer2_bits & mask1_bits) != 0 do return true
+	
+	return false
 }
 
 _furthest_vertex :: proc(shape: []Pos, dir: m.Vec3) -> (furthest_vertex: Pos) {

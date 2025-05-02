@@ -2,14 +2,13 @@ package game
 
 import "core:mem"
 
-import im "shared:imgui"
-import im_sdlgpu "shared:imgui/imgui_impl_sdlgpu3"
+import im "../../third_party/imgui"
+import im_sdlgpu "../../third_party/imgui/imgui_impl_sdlgpu3"
 import sdl "vendor:sdl3"
 
 NEAR_PLANE :: 0.001
 FAR_PLANE :: 1000
 DEPTH_STENCIL_FORMAT :: sdl.GPUTextureFormat.D32_FLOAT_S8_UINT
-
 
 
 RenderState :: struct {
@@ -85,20 +84,19 @@ renderer_draw_entity :: proc(pass: ^sdl.GPURenderPass, base: ^EntityBase) {
 	if (base.geom.vertex_buffer == nil) {
 		renderer_setup_vertex_buffer(&base.geom)
 	}
+	if (base.geom.index_buffer == nil) {
+	    renderer_setup_index_buffer(&base.geom)
+	}
 	if (materials[base.geom.material_type].pipeline == nil) {
 		material_create(base.geom.material_type)
 	}
 
 	pipeline_bind(pass, base.geom)
 
-	sdl.BindGPUVertexBuffers(
-		pass,
-		0,
-		&sdl.GPUBufferBinding{buffer = base.geom.vertex_buffer},
-		1,
-	)
-
-	sdl.DrawGPUPrimitives(pass, base.geom.vertex_count, 1, 0, 0)
+	sdl.BindGPUVertexBuffers(pass, 0, &sdl.GPUBufferBinding{buffer = base.geom.vertex_buffer}, 1)
+	sdl.BindGPUIndexBuffer(pass, {buffer = base.geom.index_buffer}, ._16BIT)
+	
+	sdl.DrawGPUIndexedPrimitives(pass, base.geom.index_count, 1, 0, 0, 0)
 }
 
 renderer_draw_ui :: proc(ui_draw_data: ^im.DrawData) {
@@ -118,8 +116,10 @@ renderer_draw_ui :: proc(ui_draw_data: ^im.DrawData) {
 	sdl.EndGPURenderPass(render_pass)
 }
 
+/* ^DRAW^ */
+
 renderer_setup_vertex_buffer :: proc(geom: ^Geometry) {
-	vertices_size := geom.vertex_size * geom.vertex_count
+	vertices_size := u32(geom.vertex_size) * geom.vertex_count
 	vertex_buffer := sdl.CreateGPUBuffer(
 		render_state.gpu,
 		{usage = {.VERTEX}, size = vertices_size},
@@ -148,6 +148,44 @@ renderer_setup_vertex_buffer :: proc(geom: ^Geometry) {
 	)
 
 	geom.vertex_buffer = vertex_buffer
+
+	sdl.EndGPUCopyPass(copy_pass)
+
+	sdl.ReleaseGPUTransferBuffer(render_state.gpu, transfer_buffer)
+
+	_ = sdl.SubmitGPUCommandBuffer(copy_cmd_buf)
+}
+
+renderer_setup_index_buffer :: proc(geom: ^Geometry) {
+	indices_size := size_of(Index) * geom.index_count
+	index_buffer := sdl.CreateGPUBuffer(
+		render_state.gpu,
+		{usage = {.INDEX}, size = indices_size},
+	)
+	assert(index_buffer != nil, string(sdl.GetError()))
+
+	transfer_buffer := sdl.CreateGPUTransferBuffer(
+		render_state.gpu,
+		{usage = .UPLOAD, size = indices_size},
+	)
+	assert(transfer_buffer != nil, string(sdl.GetError()))
+
+	transfer_mem := sdl.MapGPUTransferBuffer(render_state.gpu, transfer_buffer, false)
+	mem.copy(transfer_mem, raw_data(geom.indices), int(indices_size))
+	sdl.UnmapGPUTransferBuffer(render_state.gpu, transfer_buffer)
+
+	copy_cmd_buf := sdl.AcquireGPUCommandBuffer(render_state.gpu)
+
+	copy_pass := sdl.BeginGPUCopyPass(copy_cmd_buf)
+
+	sdl.UploadToGPUBuffer(
+		copy_pass,
+		{transfer_buffer = transfer_buffer},
+		{buffer = index_buffer, size = indices_size},
+		false,
+	)
+
+	geom.index_buffer = index_buffer
 
 	sdl.EndGPUCopyPass(copy_pass)
 

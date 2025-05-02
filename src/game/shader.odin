@@ -20,15 +20,8 @@ when ODIN_OS == .Windows {
 }
 
 
-ShaderInfo :: struct {
-    name:                 string,
-    num_samplers:         u32,
-    num_storage_textures: u32,
-    num_storage_buffers:  u32,
-    num_uniform_buffers:  u32
-}
 
-shader_load :: proc(path_src: string, num_uniform_buffers: u32) -> ^sdl.GPUShader {
+shader_load :: proc(path_src: string, num_uniform_buffers, num_samplers: u32) -> ^sdl.GPUShader {
     stage    := shader_determine_stage(path_src)
     path_dst := shader_determine_path_dst(path_src)
     
@@ -46,7 +39,7 @@ shader_load :: proc(path_src: string, num_uniform_buffers: u32) -> ^sdl.GPUShade
         entrypoint           = "main0" when SHADER_FORMAT == .MSL else "main",
         format               = { SHADER_FORMAT },
         stage                = stage,
-        num_samplers         = {},
+        num_samplers         = num_samplers,
         num_storage_textures = {},
         num_storage_buffers  = {},
         num_uniform_buffers  = num_uniform_buffers
@@ -61,7 +54,7 @@ shader_load :: proc(path_src: string, num_uniform_buffers: u32) -> ^sdl.GPUShade
 @(require_results)
 shader_process_start_shadercross :: proc(path_src: string, path_dst: string) -> (exit_code: int, process_err: os.Error) {
     command := fmt.tprintf("shadercross {} -o {}", path_src, path_dst)
-    fmt.println(command)
+    log.infof(command)
     command_split := strings.split(command, " ")
     
     process_desc := os.Process_Desc {

@@ -5,9 +5,9 @@ import "core:strings"
 
 import sdl "vendor:sdl3"
 
-import im "shared:imgui"
-import im_sdl "shared:imgui/imgui_impl_sdl3"
-import im_sdlgpu "shared:imgui/imgui_impl_sdlgpu3"
+import im "../../third_party/imgui"
+import im_sdl "../../third_party/imgui/imgui_impl_sdl3"
+import im_sdlgpu "../../third_party/imgui/imgui_impl_sdlgpu3"
 
 
 
@@ -85,22 +85,21 @@ ui_show_general_panel :: proc() {
                         im.DragFloat3("Rotation", &v.rot)
                     }
                 case Entity_Opp:
-                        if v.name == "" do continue
-                        if im.CollapsingHeader(strings.clone_to_cstring(v.name, context.temp_allocator)) {
-                            eid := strings.clone_to_cstring(fmt.tprintf("eid:{}", v.eid), context.temp_allocator)
-                            im.Text(eid)
-                            im.DragFloat3("Position", &v.pos)
-                            im.DragFloat3("Rotation", &v.rot)
-                        }
-                
+                    if v.name == "" do continue
+                    if im.CollapsingHeader(strings.clone_to_cstring(v.name, context.temp_allocator)) {
+                        eid := strings.clone_to_cstring(fmt.tprintf("eid:{}", v.eid), context.temp_allocator)
+                        im.Text(eid)
+                        im.DragFloat3("Position", &v.pos)
+                        im.DragFloat3("Rotation", &v.rot)
+                    }
                 case Entity_Mesh:
-                        if v.name == "" do continue
-                        if im.CollapsingHeader(strings.clone_to_cstring(v.name, context.temp_allocator)) {
-                            eid := strings.clone_to_cstring(fmt.tprintf("eid:{}", v.eid), context.temp_allocator)
-                            im.Text(eid)
-                            im.DragFloat3("Position", &v.pos)
-                            im.DragFloat3("Rotation", &v.rot)
-                        }
+                    if v.name == "" do continue
+                    if im.CollapsingHeader(strings.clone_to_cstring(v.name, context.temp_allocator)) {
+                        eid := strings.clone_to_cstring(fmt.tprintf("eid:{}", v.eid), context.temp_allocator)
+                        im.Text(eid)
+                        im.DragFloat3("Position", &v.pos)
+                        im.DragFloat3("Rotation", &v.rot)
+                    }
                 case Entity_Camera:
                     if v.name == "" do continue
                     if im.CollapsingHeader(strings.clone_to_cstring(v.name, context.temp_allocator)){
