@@ -28,7 +28,7 @@ spawn_base :: proc(base: ^EntityBase) {
 }
 
 spawn_player :: proc(player: ^Entity_Player) {
-	setup_player(player)
+	player_setup(player)
 	player.eid = _freed_eid_stack.len > 0 ? stack.pop(&_freed_eid_stack) : world.entity_count
 	world.entities[player.eid] = player^
 	world.entity_count += 1
@@ -67,47 +67,51 @@ world_destroy :: proc {
 }
 
 destroy_player :: proc() {
-	cleanup_player()
+	player_cleanup()
 }
 
 destroy_opp :: proc(opp: Entity_Opp) {
+    if opp.geom.vertices != nil do delete(opp.geom.vertices)
 	stack.push(&_freed_eid_stack, opp.eid)
 	world.entities[opp.eid] = {}
 	world.entity_count -= 1
 }
 
 destroy_camera :: proc(camera: Entity_Camera) {
+    if camera.geom.vertices != nil do delete(camera.geom.vertices)
 	stack.push(&_freed_eid_stack, camera.eid)
 	world.entities[camera.eid] = {}
 	world.entity_count -= 1
 }
 
 destroy_mesh :: proc(mesh: Entity_Mesh) {
+    if mesh.geom.vertices != nil do delete(mesh.geom.vertices)
 	stack.push(&_freed_eid_stack, mesh.eid)
 	world.entities[mesh.eid] = {}
 	world.entity_count -= 1
 }
 
 destroy_projectile :: proc(p: Entity_Projectile) {
+    if p.geom.vertices != nil do delete(p.geom.vertices)
 	stack.push(&_freed_eid_stack, p.eid)
 	world.entities[p.eid] = {}
 	world.entity_count -= 1
 }
 
 world_update_entity :: proc(e: ^Entity) {
-	switch v in e {
+	switch &v in e {
 	case EntityBase:
 
 	case Entity_Player:
-	    update_player()
+	    player_update(&v)
 	case Entity_Opp:
 	    // log.info(v.health)
 	case Entity_Mesh:
 
 	case Entity_Camera:
-
+	    camera_update(&v)
 	case Entity_Projectile:
-		projectile_update(&e.(Entity_Projectile))
+		projectile_update(&v)
 	}	
 	
 	base := cast(^EntityBase)e

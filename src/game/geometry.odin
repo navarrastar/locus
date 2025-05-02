@@ -628,7 +628,7 @@ mesh :: proc(name: string) -> Geometry {
 	uv_accessor_idx,       _ := primitive.attributes["TEXCOORD_0"]
 
 	index_count: u32 = 0
-	indices_dst: [dynamic]Index
+	indices_dst: []Index
 
 	// Get index data from accessor
 	indices_accessor := model.accessors[primitive.indices.?]
@@ -639,7 +639,7 @@ mesh :: proc(name: string) -> Geometry {
 
 	#partial switch indices_array in indices_buffer {
 	case []u16:
-	    indices_dst = make([dynamic]Index, len(indices_array))
+	    indices_dst = make([]Index, len(indices_array))
 		for idx, i in indices_array {
 			fmt.assertf(idx <= 65535, "Index value %d exceeds u16 max value (65535)", idx)
 			indices_dst[i] = idx
@@ -653,11 +653,11 @@ mesh :: proc(name: string) -> Geometry {
 
 	positions := gltf.buffer_slice(model, position_accessor_idx)
 
-	vertices_dst: [dynamic]f32
+	vertices_dst: []f32
 
 	#partial switch positions_array in positions {
 	case [][3]f32:
-		vertices_dst = make([dynamic]f32, int(vertex_count * 12))
+		vertices_dst = make([]f32, int(vertex_count * 12))
 
 		vi := 0 // vertex index for our destination buffer
 		for i in 0 ..< len(positions_array) {

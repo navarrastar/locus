@@ -27,20 +27,12 @@ pipeline_bind :: proc(pass: ^sdl.GPURenderPass, geom: Geometry) {
 pipeline_push_buffers :: proc(pass: ^sdl.GPURenderPass, geom: Geometry) {
 	switch geom.material_type {
 	case .Default, .Grid:
-		active_camera := world_camera()
+		camera := world_camera()
 
-		world_buffer: GPUWorldBuffer
-		world_buffer.view = m.look_at(
-			active_camera.transform.pos,
-			active_camera.target,
-			active_camera.up,
-		)
-		world_buffer.proj = m.perspective(
-			active_camera.fovy,
-			window_aspect_ratio(),
-			NEAR_PLANE,
-			FAR_PLANE,
-		)
+		world_buffer := GPUWorldBuffer {
+		    view = camera.view,
+			proj = camera.proj
+		}
 
 		sdl.PushGPUVertexUniformData(
 			render_state.cmd_buffer,

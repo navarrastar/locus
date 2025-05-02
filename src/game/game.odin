@@ -11,7 +11,6 @@ init :: proc() {
 	start_time = time.now()
 
 	world = new(World)
-	window_state = new(WindowState)
 	render_state = new(RenderState)
 	ui_state = new(UIState)
 
@@ -62,12 +61,11 @@ update :: proc() {
 cleanup :: proc() {
 	free(ui_state)
 	free(render_state)
-	free(window_state)
 	free(world)
 }
 
 should_shutdown :: proc() -> bool {
-	return window_state.should_close
+	return window_should_close
 }
 
 game_default_level :: proc() {
@@ -124,7 +122,7 @@ game_default_level :: proc() {
 
 	random_triangle := Entity_Mesh {
 	    transform = { pos={0, 0, -5}, rot={0, 0, 0}, scale=1 },
-	    geom = triangle(),
+	    geom = triangle(material= .Test),
 	}
 	world_spawn(&random_triangle)
 

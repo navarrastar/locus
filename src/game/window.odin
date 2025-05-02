@@ -11,10 +11,6 @@ WINDOW_START_HEIGHT :: 720
 
 global_context: runtime.Context
 
-WindowState :: struct {
-    should_close: bool
-}
-
 window_init :: proc(ctx: runtime.Context) {
     global_context = ctx
     sdl.SetLogPriorities(.VERBOSE)
@@ -37,10 +33,6 @@ window_init :: proc(ctx: runtime.Context) {
     sdl.GetWindowSize(window, &window_width, &window_height)
 }
 
-window_cleanup :: proc() {
-    //rl.CloseWindow()
-}
-
 window_poll_events :: proc() {
     @(static) old_tick: u64
     new_tick := sdl.GetTicks()
@@ -52,10 +44,10 @@ window_poll_events :: proc() {
         im_sdl.ProcessEvent(&event)
         #partial switch event.type {
             case .QUIT:
-                window_state.should_close = true
+                window_should_close = true
             case .KEY_DOWN:
                 input_handle_down_event(event.key.scancode)
-                if event.key.scancode == .ESCAPE    do window_state.should_close = true
+                if event.key.scancode == .ESCAPE    do window_should_close = true
                 if event.key.scancode == .GRAVE     do ui_toggle_visibility({ .None })
                 if event.key.scancode == .D         do ui_toggle_visibility({ .Demo })
                 if event.key.scancode == .G         do ui_toggle_visibility({ .General })
@@ -66,6 +58,7 @@ window_poll_events :: proc() {
 
     }
 
+    _ = sdl.GetMouseState(&mouse_pos.x, &mouse_pos.y)
     sdl.GetWindowSize(window, &window_width, &window_height)
     
 }
@@ -75,6 +68,9 @@ window_aspect_ratio :: proc() -> f32 {
 }
 
 window_set_should_close :: proc() {
-    window_state.should_close = !window_state.should_close
+    window_should_close = !window_should_close
 }
 
+window_get_mouse_poss :: proc() {
+    
+}

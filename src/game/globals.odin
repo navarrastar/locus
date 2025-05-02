@@ -15,12 +15,13 @@ start_time: time.Time
 shader_should_check_for_changes: bool
 
 window: ^sdl.Window
-swapchain_texture_format: sdl.GPUTextureFormat
+window_should_close: bool
 window_width, window_height: i32
+mouse_pos: [2]f32
+swapchain_texture_format: sdl.GPUTextureFormat
 dt: f32
 
 world: ^World
-window_state: ^WindowState
 render_state: ^RenderState
 ui_state: ^UIState
 

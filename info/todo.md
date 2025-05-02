@@ -6,6 +6,7 @@
 ### **Feature** ###
 - [ ] Melee attacks
 - [ ] Make shop
+- [ ] Use raycast for player_set_face_dir
 
 ### **Fix** ###
 - [ ] Fix the projectile.pos.y hack
