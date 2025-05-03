@@ -18,7 +18,6 @@ Texture :: struct {
 
 MaterialType :: enum {
     Default, // Vertex_PosColNorm
-    Capsule,
     Grid, // Vertex_PosCol
     Test, // Vertex_PosColNorm
     Mesh, // Vertex_PosColNormUV

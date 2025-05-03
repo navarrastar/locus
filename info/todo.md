@@ -6,7 +6,11 @@
 ### **Feature** ###
 - [ ] Melee attacks
 - [ ] Make shop
-- [ ] Use raycast for player_set_face_dir
+- [x] Use raycast for player_set_face_dir
+- [ ] Jumping
+- [ ] Animation
+- [ ] Dashing
+- [ ] Smooth Movement
 
 ### **Fix** ###
 - [ ] Fix the projectile.pos.y hack

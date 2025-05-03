@@ -29,7 +29,6 @@ materials: [MaterialType]Material
 shader_name_to_material_type := map[string]MaterialType {
 	"default" = .Default,
 	"grid"    = .Grid,
-	"capsule" = .Capsule,
 	"test"    = .Test,
 	"mesh"    = .Mesh,
 }

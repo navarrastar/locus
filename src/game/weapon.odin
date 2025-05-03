@@ -87,7 +87,7 @@ _use_fireball :: proc(fireball: ^Weapon_Fireball, user: eID) {
 
 // ----------------------------------------
 
-WEAPON_SCYTHE_SPEED :: 30
+WEAPON_SCYTHE_SPEED :: 15
 WEAPON_SCYTHE_DAMAGE :: 10
 WEAPON_SCYTHE_COOLDOWN :: time.Millisecond * 500
 WEAPON_SCYTHE_SIZE :: 2

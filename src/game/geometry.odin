@@ -15,15 +15,16 @@ Geometry :: struct {
 	vertices:      []f32,
 	vertex_size:   int,
 	vertex_stride: int,
-	vertex_buffer: ^sdl.GPUBuffer,
 	vertex_count:  u32,
+	vertex_buffer: ^sdl.GPUBuffer,
 	indices:       []Index,
-	index_buffer:  ^sdl.GPUBuffer,
 	index_count:   u32,
+	index_buffer:  ^sdl.GPUBuffer,
 	material_type: MaterialType,
 	diffuse:       ^Texture,
 	normal:        ^Texture,
 	emissive:      ^Texture,
+	skin:          Maybe(Skin)
 }
 
 Pos :: m.Vec3

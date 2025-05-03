@@ -171,3 +171,13 @@ abs :: proc(x: f32) -> f32 {
 same_dir :: proc(dir1, dir2: Vec3) -> bool {
     return dot(dir1, dir2) > 0
 }
+
+@(require_results)
+inverse :: proc(m: Mat4) -> Mat4 {
+    return linalg.matrix4_inverse(m)
+}
+
+@(require_results)
+lerp :: proc(a, b, t: $T) -> T {
+    return linalg.lerp(a, b, t)
+}

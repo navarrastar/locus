@@ -40,8 +40,6 @@ pipeline_push_buffers :: proc(pass: ^sdl.GPURenderPass, geom: Geometry) {
 			&world_buffer,
 			size_of(GPUWorldBuffer),
 		)
-	case .Capsule:
-
 	case .Test:
 		time_elapsed := time.since(start_time)
 		seconds := f32(time.duration_seconds(time_elapsed))
@@ -99,8 +97,6 @@ pipeline_create :: proc(type: MaterialType) {
 		pipeline_create_default()
 	case .Grid:
 		pipeline_create_grid()
-	case .Capsule:
-		pipeline_create_capsule()
 	case .Test:
 		pipeline_create_test()
 	case .Mesh:
@@ -191,10 +187,6 @@ pipeline_create_grid :: proc() {
 
 	sdl.ReleaseGPUShader(render_state.gpu, vert_shader)
 	sdl.ReleaseGPUShader(render_state.gpu, frag_shader)
-}
-
-pipeline_create_capsule :: proc() {
-
 }
 
 pipeline_create_test :: proc() {
