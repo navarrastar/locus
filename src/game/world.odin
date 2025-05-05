@@ -115,7 +115,9 @@ world_update_entity :: proc(e: ^Entity) {
 	}	
 	
 	base := cast(^EntityBase)e
-	animation_continue(base)
+	if skin, ok := base.geom.skin.?; ok {
+	    anim_continue(&skin)
+	}
 	base.geom.model_matrix = m.to_matrix(base.transform)
 }
 

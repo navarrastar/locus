@@ -22,6 +22,7 @@ player_setup :: proc(player: ^Entity_Player) {
 }
 
 player_update :: proc(player: ^Entity_Player) {
+    if input_key_newly_down(.M) do player_cycle_anim(player)    
     if input_key_newly_down(.W) do player_set_wish_dir(player, {0, 0, -1})
     if input_key_newly_down(.A) do player_set_wish_dir(player, {-1, 0, 0})
     if input_key_newly_down(.S) do player_set_wish_dir(player, {0, 0, 1})
@@ -29,8 +30,6 @@ player_update :: proc(player: ^Entity_Player) {
     // if input_key_newly_down(.SPACE) do player_try_jump(player)
     // if input_key_newly_down(.LSHIFT) do player_try_dash(player)
     // if input_key_newly_down(.LCTRL) do player_try_block(player)
-    
-    
 
     if input_key_released(.W) do player_set_wish_dir(player, {0, 0, 1})
     if input_key_released(.A) do player_set_wish_dir(player, {1, 0, 0})
@@ -101,4 +100,11 @@ player_set_face_dir :: proc(player: ^Entity_Player) {
 
 player_try_use_weapon :: proc(player: ^Entity_Player, slot: WeaponSlot) {
     weapon_use(&player.inventory.weapons[slot], player.eid)
+}
+
+player_cycle_anim :: proc(player: ^Entity_Player) {
+    skin, ok := &player.geom.skin.?
+    if !ok do return
+
+    skin.anim_idx = skin.anim_idx == len(skin.anims) - 1 ? 0 : skin.anim_idx + 1
 }

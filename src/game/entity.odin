@@ -77,3 +77,11 @@ Entity_Projectile :: struct {
 get_base :: proc(eid: eID) -> ^EntityBase {
 	return cast(^EntityBase)&world.entities[eid]
 }
+
+get_world_mat :: proc(eid: eID) -> m.Mat4 {
+    mat := m.IDENTITY_MAT
+    
+    
+    
+    return mat
+}

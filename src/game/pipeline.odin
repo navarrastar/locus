@@ -77,7 +77,19 @@ pipeline_push_buffers :: proc(pass: ^sdl.GPURenderPass, geom: Geometry) {
 			&world_buffer,
 			size_of(GPUWorldBuffer),
 		)
-
+		
+		skin_buffer: GPUSkinBuffer
+		for mat, i in geom.skin.?.joint_matrices {
+		    skin_buffer.joint_matrices[i] = mat
+		}
+		
+		sdl.PushGPUVertexUniformData(
+		    render_state.cmd_buffer,
+			2,
+			&skin_buffer,
+			size_of(GPUSkinBuffer)
+		)
+		
 		sdl.BindGPUFragmentSamplers(
 			pass,
 			0,
@@ -232,13 +244,13 @@ pipeline_create_test :: proc() {
 }
 
 pipeline_create_mesh :: proc() {
-	vert_shader := shader_load(SHADER_DIR + "hlsl/mesh.vert.hlsl", 2, 0)
+	vert_shader := shader_load(SHADER_DIR + "hlsl/mesh.vert.hlsl", 3, 0)
 	frag_shader := shader_load(SHADER_DIR + "hlsl/mesh.frag.hlsl", 0, 1)
 	if vert_shader == nil || frag_shader == nil {
 		log.error("Failed to load mesh shaders")
 		return
 	}
-	attributes := ATTRIBUTES_POS_COL_NORM_UV
+	attributes := ATTRIBUTES_POS_COL_NORM_UV_TAN_SKIN
 	pipeline_desc := sdl.GPUGraphicsPipelineCreateInfo {
 		vertex_shader = vert_shader,
 		fragment_shader = frag_shader,
@@ -247,7 +259,7 @@ pipeline_create_mesh :: proc() {
 			num_vertex_buffers = 1,
 			vertex_buffer_descriptions = &(sdl.GPUVertexBufferDescription {
 					slot = 0,
-					pitch = size_of(Vertex_PosColNormUV),
+					pitch = size_of(Vertex_PosColNormUVTanSkin),
 				}),
 			num_vertex_attributes = u32(len(attributes)),
 			vertex_attributes = &attributes[0],

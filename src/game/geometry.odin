@@ -24,15 +24,15 @@ Geometry :: struct {
 	diffuse:       ^Texture,
 	normal:        ^Texture,
 	emissive:      ^Texture,
-	skin:          Maybe(Skin)
+	skin:          Maybe(Skeleton)
 }
 
-Pos :: m.Vec3
-Color :: m.Vec4
-UV :: m.Vec2
-Normal :: m.Vec3
+Pos     :: m.Vec3
+Color   :: m.Vec4
+UV      :: m.Vec2
+Normal  :: m.Vec3
 Tangent :: m.Vec3
-Joints :: [4]u8
+Joints  :: m.Vec4
 Weights :: m.Vec4
 
 COLOR_WHITE: [4]f32 : {1, 1, 1, 1}
@@ -596,148 +596,260 @@ cube :: proc(color: Color = COLOR_WHITE, material: MaterialType = .Default) -> G
 }
 
 mesh :: proc(name: string) -> Geometry {
-   	// Each .glb file should only have one mesh.
-	// You must split meshes into seperate .glb files
-	// and load them seperately
-	// 
-	// The mesh must meet the following requirements:
-	// At least POSITION, COLOR_0, NORMAL, TEXCOORD_0 attributes
-	// 16 bit indices
-	// base_color_texture
-	// Only one primitive on the mesh
+    material_type: MaterialType = .Mesh
     
-	model, err := gltf_load(name)
-	fmt.assertf(model != nil && err == nil, "{}", err)
+    vertex_size := size_of(Vertex_PosColNormUVTanSkin)
+    vertex_stride := size_of(Vertex_PosColNormUVTanSkin) / size_of(f32)
+    
+    // Load the model - validation is done in loader_validate
+    model := gltf_load(name)
+    mesh := model.meshes[0]
+    primitive := mesh.primitives[0]
 
-	if len(model.meshes) <= 0 {
-		fmt.assertf(false, "Model %s does not contain any meshes", name)
-		return {}
-	}
+    // Get attribute accessors
+    position_accessor_idx := primitive.attributes["POSITION"]
+    normal_accessor_idx   := primitive.attributes["NORMAL"]
+    color_accessor_idx    := primitive.attributes["COLOR_0"]
+    uv_accessor_idx       := primitive.attributes["TEXCOORD_0"]
+    tan_accessor_idx      := primitive.attributes["TANGENT"]
+    joints_accessor_idx   := primitive.attributes["JOINTS_0"]
+    weights_accessor_idx  := primitive.attributes["WEIGHTS_0"]
+    
+    // Get Indices
+    indices_accessor := model.accessors[primitive.indices.?]
+    index_count := u32(indices_accessor.count)
+    indices_buffer := gltf.buffer_slice(model, primitive.indices.?)
+    indices_array := indices_buffer.([]u16)
+    
+    indices_dst := make([]Index, len(indices_array))
+    for index, i in indices_array {
+        fmt.assertf(index <= 65535, "Index value %d exceeds u16 max value (65535)", index)
+        indices_dst[i] = index
+    }
 
-	mesh := model.meshes[0]
-	if len(mesh.primitives) <= 0 {
-		fmt.assertf(false, "Mesh in model %s does not contain any primitives", name)
-		return {}
-	}
+    // Get Vertices
+    position_accessor := model.accessors[position_accessor_idx]
+    vertex_count := u32(position_accessor.count)
+    
+    // We need to create vertices array for all vertex attributes
+    vertices_dst := make([]f32, vertex_count * u32(vertex_stride))
+    
+    // Extract all attribute data
+    positions_buffer := gltf.buffer_slice(model, position_accessor_idx)
+    positions_array := positions_buffer.([][3]f32)
+    
+    normals_buffer := gltf.buffer_slice(model, normal_accessor_idx)
+    normals_array := normals_buffer.([][3]f32)
+    
+    colors_buffer := gltf.buffer_slice(model, color_accessor_idx)
+    colors_array := colors_buffer.([][4]u8)
+    
+    uvs_buffer := gltf.buffer_slice(model, uv_accessor_idx)
+    uvs_array := uvs_buffer.([][2]f32)
+    
+    tangents_buffer := gltf.buffer_slice(model, tan_accessor_idx)
+    tangents_array := tangents_buffer.([][4]f32)
+    
+    joints_buffer := gltf.buffer_slice(model, joints_accessor_idx)
+    joints_array := joints_buffer.([][4]u8)
+    
+    weights_buffer := gltf.buffer_slice(model, weights_accessor_idx)
+    weights_array := weights_buffer.([][4]f32)
+    
+    // Fill the interleaved vertex data array
+    for i := 0; i < int(vertex_count); i += 1 {
+        base_idx := i * vertex_stride
+        
+        // Position
+        pos := positions_array[i]
+        vertices_dst[base_idx + 0] = pos[0]
+        vertices_dst[base_idx + 1] = pos[1]
+        vertices_dst[base_idx + 2] = pos[2]
+        
+        // Color
+        color := colors_array[i]
+        vertices_dst[base_idx + 3] = f32(color[0])
+        vertices_dst[base_idx + 4] = f32(color[1])
+        vertices_dst[base_idx + 5] = f32(color[2])
+        vertices_dst[base_idx + 6] = f32(color[3])
+        
+        // UV
+        uv := uvs_array[i]
+        vertices_dst[base_idx + 7] = uv[0]
+        vertices_dst[base_idx + 8] = uv[1]
+        
+        // Normal
+        normal := normals_array[i]
+        vertices_dst[base_idx + 9] = normal[0]
+        vertices_dst[base_idx + 10] = normal[1]
+        vertices_dst[base_idx + 11] = normal[2]
+        
+        // Tangent
+        tangent := tangents_array[i]
+        vertices_dst[base_idx + 12] = tangent[0]
+        vertices_dst[base_idx + 13] = tangent[1]
+        vertices_dst[base_idx + 14] = tangent[2]
+        
+        // Joints
+        joint := joints_array[i]
+        vertices_dst[base_idx + 15] = f32(joint[0])
+        vertices_dst[base_idx + 16] = f32(joint[1])
+        vertices_dst[base_idx + 17] = f32(joint[2])
+        vertices_dst[base_idx + 18] = f32(joint[3])
+        
+        // Weights
+        weight := weights_array[i]
+        vertices_dst[base_idx + 19] = weight[0]
+        vertices_dst[base_idx + 20] = weight[1]
+        vertices_dst[base_idx + 21] = weight[2]
+        vertices_dst[base_idx + 22] = weight[3]
+    }
+    
+    // Get Diffuse Texture
+    gltf_material_idx := primitive.material.?
+    gltf_material := model.materials[gltf_material_idx]
+    bct_idx := gltf_material.metallic_roughness.?.base_color_texture.?.index
+    bct := model.textures[bct_idx]
+    bct_image_idx := bct.source.?
+    diffuse := texture_create_from_gltf_image(model, bct_image_idx)
 
-	// Get the first primitive in the mesh
-	primitive := mesh.primitives[0]
+    // Create base geometry
+    geometry := Geometry {
+        model_matrix = m.IDENTITY_MAT,
+        vertices = vertices_dst[:],
+        vertex_count = vertex_count,
+        vertex_size = vertex_size,
+        vertex_stride = vertex_stride,
+        indices = indices_dst[:],
+        index_count = index_count,
+        material_type = material_type,
+        diffuse = diffuse,
+    }
 
-	position_accessor_idx, _ := primitive.attributes["POSITION"]
-	normal_accessor_idx,   _ := primitive.attributes["NORMAL"]
-	color_accessor_idx,    _ := primitive.attributes["COLOR_0"]
-	uv_accessor_idx,       _ := primitive.attributes["TEXCOORD_0"]
+    // Process skinning data if available
+    if len(model.skins) > 0 && len(model.animations) > 0 {
+        gltf_skin := model.skins[0]
+        
+        
+        // Create skin
+        skeleton: Skeleton
+        skeleton.anims = make([]Animation, len(model.animations))
+        skeleton.name = gltf_skin.name != nil ? string(gltf_skin.name.?) : "unnamed_skin"
+        
+        // Get inverse bind matrices
+        ibm_accessor_idx := gltf_skin.inverse_bind_matrices.?
+        ibm_data := gltf.buffer_slice(model, ibm_accessor_idx)
+        
+        // Create joints
+        skeleton.joints = make([]Joint, len(gltf_skin.joints))
+        skeleton.joint_matrices = make([]m.Mat4, len(gltf_skin.joints))
+        
+        // Process joints
+        for &joint, j in skeleton.joints {
+            node_idx := gltf_skin.joints[j]
+            
+            joint.name = model.nodes[node_idx].name.?
+            joint.node_idx = int(node_idx)
+            joint.inverse_bind_mat = ibm_data.([]m.Mat4)[j]
+            
+            node := model.nodes[node_idx]
+            joint.deformed_pos   = node.translation
+            joint.deformed_rot   = node.rotation
+            joint.deformed_scale = node.scale
+            joint.undeformed_mat = node.mat
+            
+            skeleton.node_to_joint_idx[int(node_idx)] = j
+        }
+        
+        load_joint(model^, &skeleton, int(gltf_skin.joints[0]), -1) // recursive
+        
+        // Create animations
+        skeleton.anims = make([]Animation, len(model.animations))
+        
+        // Process animations
+        for gltf_anim, a in model.animations {
+            anim := Animation{
+                time_scale = 1,
+                weight = 1,
+                start = max(f32),
+                end = min(f32),
+            }
+            
+            // Process animation samplers
+            anim.samplers = make([]Sampler, len(gltf_anim.samplers))
+            for gltf_sampler, s in gltf_anim.samplers {
+                sampler := &anim.samplers[s]
+                
+                // Set interpolation type
+                switch gltf_sampler.interpolation {
+                case .Linear:
+                    sampler.interpolation = .Linear
+                case .Step:
+                    sampler.interpolation = .Step
+                case .Cubic_Spline:
+                    sampler.interpolation = .Linear
+                }
+                
+                // Process timestamps
+                input_data := gltf.buffer_slice(model, gltf_sampler.input)
+                if times, ok := input_data.([]f32); ok {
+                    sampler.timestamps = make([]f32, len(times))
+                    for time, t in times {
+                        sampler.timestamps[t] = time
+                        
+                        // Update animation time range
+                        if time < anim.start do anim.start = time
+                        if time > anim.end do anim.end = time
+                    }
+                }
+                
+                // Process values
+                output_data := gltf.buffer_slice(model, gltf_sampler.output)
+                if vec3_values, ok := output_data.([][3]f32); ok {
+                    sampler.values = make([]m.Vec4, len(vec3_values))
+                    for value, v in vec3_values {
+                        sampler.values[v] = {value[0], value[1], value[2], 0}
+                    }
+                } else if vec4_values, ok2 := output_data.([][4]f32); ok2 {
+                    sampler.values = make([]m.Vec4, len(vec4_values))
+                    for value, v in vec4_values {
+                        sampler.values[v] = {value[0], value[1], value[2], value[3]}
+                    }
+                }
+            }
+            
+            // Process animation channels
+            anim.channels = make([]Channel, len(gltf_anim.channels))
+            for gltf_channel, i in gltf_anim.channels {
+                channel := &anim.channels[i]
+                
+                channel.sampler_idx = gltf_channel.sampler
+                target := gltf_channel.target
+                channel.node_idx = int(target.node.?)
+                
+                // Set the target path
+                switch target.path {
+                case .Translation:
+                    channel.path = .Translation
+                case .Rotation:
+                    channel.path = .Rotation
+                case .Scale:
+                    channel.path = .Scale
+                case .Weights:
+                    // Skip weights animation
+                    continue
+                }
+            }
+            
+            // Store the animation in the skin
+            skeleton.anims[a] = anim
+            }
+        
+        // Assign the skin to the geometry
+        geometry.skin = skeleton
+    }
 
-	index_count: u32 = 0
-	indices_dst: []Index
-
-	// Get index data from accessor
-	indices_accessor := model.accessors[primitive.indices.?]
-	index_count = u32(indices_accessor.count)
-
-	// Get the indices from the buffer
-	indices_buffer := gltf.buffer_slice(model, primitive.indices.?)
-
-	#partial switch indices_array in indices_buffer {
-	case []u16:
-	    indices_dst = make([]Index, len(indices_array))
-		for idx, i in indices_array {
-			fmt.assertf(idx <= 65535, "Index value %d exceeds u16 max value (65535)", idx)
-			indices_dst[i] = idx
-		}
-	case:
-		panic("")
-	}
-
-	position_accessor := model.accessors[position_accessor_idx]
-	vertex_count := u32(position_accessor.count)
-
-	positions := gltf.buffer_slice(model, position_accessor_idx)
-
-	vertices_dst: []f32
-
-	#partial switch positions_array in positions {
-	case [][3]f32:
-		vertices_dst = make([]f32, int(vertex_count * 12))
-
-		vi := 0 // vertex index for our destination buffer
-		for i in 0 ..< len(positions_array) {
-			pos := positions_array[i]
-
-			// Default values
-			color: [4]f32 = COLOR_WHITE
-			normal: [3]f32 = {0, 1, 0}
-			uv: [2]f32 = {0, 0}
-
-			colors := gltf.buffer_slice(model, color_accessor_idx)
-			if colors_vec4, ok := colors.([][4]f32); ok && i < len(colors_vec4) {
-				color = colors_vec4[i]
-			} else if colors_vec3, ok2 := colors.([][3]f32); ok2 && i < len(colors_vec3) {
-				color = {colors_vec3[i][0], colors_vec3[i][1], colors_vec3[i][2], 1.0}
-			}
-
-			normals := gltf.buffer_slice(model, normal_accessor_idx)
-			if normals_vec3, ok := normals.([][3]f32); ok && i < len(normals_vec3) {
-				normal = normals_vec3[i]
-			}
-
-			// Add position, color, normal
-			vertices_dst[vi] = pos[0]; vi += 1
-			vertices_dst[vi] = pos[1]; vi += 1
-			vertices_dst[vi] = pos[2]; vi += 1
-			vertices_dst[vi] = color[0]; vi += 1
-			vertices_dst[vi] = color[1]; vi += 1
-			vertices_dst[vi] = color[2]; vi += 1
-			vertices_dst[vi] = color[3]; vi += 1
-			vertices_dst[vi] = normal[0]; vi += 1
-			vertices_dst[vi] = normal[1]; vi += 1
-			vertices_dst[vi] = normal[2]; vi += 1
-
-			uvs := gltf.buffer_slice(model, uv_accessor_idx)
-			if uvs_vec2, ok := uvs.([][2]f32); ok && i < len(uvs_vec2) {
-				uv = uvs_vec2[i]
-			}
-			vertices_dst[vi] = uv[0]; vi += 1
-			vertices_dst[vi] = uv[1]; vi += 1
-		}
-	case:
-		fmt.assertf(false, "Unsupported position format in mesh %s", name)
-		return {}
-	}
-	
-	material_type: MaterialType = .Mesh
-
-	diffuse: ^Texture = nil
-	assert(primitive.material != nil)
-	material_idx := primitive.material.?
-	gltf_material := model.materials[material_idx]
-
-	assert(gltf_material.metallic_roughness != nil)
-	assert(gltf_material.metallic_roughness.?.base_color_texture != nil)
-
-	texture_idx := gltf_material.metallic_roughness.?.base_color_texture.?.index
-	gltf_texture := model.textures[texture_idx]
-
-	assert(gltf_texture.source != nil)
-	image_idx := gltf_texture.source.?
-	diffuse = texture_create_from_gltf_image(model, int(image_idx))
-
-	assert(diffuse != nil)
-
-	vertex_size   := size_of(Vertex_PosColNormUV)
-	vertex_stride := size_of(Vertex_PosColNormUV) / size_of(f32)
-
-	return Geometry {
-		model_matrix = m.IDENTITY_MAT,
-		vertices = vertices_dst[:],
-		vertex_count = vertex_count,
-		vertex_size = vertex_size,
-		vertex_stride = vertex_stride,
-		indices = indices_dst[:],
-		index_count = index_count,
-		material_type = material_type,
-		diffuse = diffuse,
-	}
+    return geometry
 }
 
 
@@ -823,43 +935,45 @@ ATTRIBUTES_POS_COL_NORM_UV_TAN :: [?]sdl.GPUVertexAttribute {
 	},
 }
 
-ATTRIBUTES_ALL :: [?]sdl.GPUVertexAttribute {
+ATTRIBUTES_POS_COL_NORM_UV_TAN_SKIN :: [?]sdl.GPUVertexAttribute {
 	sdl.GPUVertexAttribute {
 		location = 0,
 		format = .FLOAT3,
-		offset = u32(offset_of(Vertex_AllAttributes, pos)),
+		offset = u32(offset_of(Vertex_PosColNormUVTanSkin, pos)),
 	},
 	sdl.GPUVertexAttribute {
 		location = 1,
 		format = .FLOAT4,
-		offset = u32(offset_of(Vertex_AllAttributes, color)),
-	},
-	sdl.GPUVertexAttribute {
-		location = 3,
-		format = .FLOAT3,
-		offset = u32(offset_of(Vertex_AllAttributes, normal)),
+		offset = u32(offset_of(Vertex_PosColNormUVTanSkin, color)),
 	},
 	sdl.GPUVertexAttribute {
 		location = 2,
-		format = .FLOAT2,
-		offset = u32(offset_of(Vertex_AllAttributes, uv)),
+		format = .FLOAT3,
+		offset = u32(offset_of(Vertex_PosColNormUVTanSkin, normal)),
 	},
 	sdl.GPUVertexAttribute {
-		location = 4,
-		format = .FLOAT4,
-		offset = u32(offset_of(Vertex_AllAttributes, tangent)),
+		location = 3,
+		format = .FLOAT2,
+		offset = u32(offset_of(Vertex_PosColNormUVTanSkin, uv)),
+	},
+	sdl.GPUVertexAttribute {
+	    location = 4,
+		format = .FLOAT3,
+		offset = u32(offset_of(Vertex_PosColNormUVTanSkin, tangent)),
 	},
 	sdl.GPUVertexAttribute {
 		location = 5,
-		format = .UINT4,
-		offset = u32(offset_of(Vertex_AllAttributes, joints)),
+		format = .FLOAT4,
+		offset = u32(offset_of(Vertex_PosColNormUVTanSkin, joints)),
 	},
 	sdl.GPUVertexAttribute {
 		location = 6,
 		format = .FLOAT4,
-		offset = u32(offset_of(Vertex_AllAttributes, weights)),
+		offset = u32(offset_of(Vertex_PosColNormUVTanSkin, weights)),
 	},
 }
+
+
 
 Vertex_PosCol :: struct {
 	pos:   Pos,
@@ -887,7 +1001,7 @@ Vertex_PosColNormUVTan :: struct {
 	tan:    Tangent,
 }
 
-Vertex_AllAttributes :: struct {
+Vertex_PosColNormUVTanSkin :: struct {
 	pos:     Pos,
 	color:   Color,
 	uv:      UV,

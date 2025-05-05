@@ -20,13 +20,12 @@ MaterialType :: enum {
     Default, // Vertex_PosColNorm
     Grid, // Vertex_PosCol
     Test, // Vertex_PosColNorm
-    Mesh, // Vertex_PosColNormUV
+    Mesh, // Vertex_PosColNormUVTanSkin
 }
 
 Material :: struct {
     type:      MaterialType,
     pipeline: ^sdl.GPUGraphicsPipeline,
-
 }
 
 material_create :: proc(type: MaterialType) {
@@ -35,8 +34,8 @@ material_create :: proc(type: MaterialType) {
 
 
 // Create a texture from GLTF image data
-texture_create_from_gltf_image :: proc(model: ^gltf.Data, image_index: int) -> ^Texture {
-    if image_index < 0 || image_index >= len(model.images) {
+texture_create_from_gltf_image :: proc(model: ^gltf.Data, image_index: u32) -> ^Texture {
+    if image_index < 0 || int(image_index) >= len(model.images) {
         log.errorf("Invalid GLTF image index: %d", image_index)
         return nil
     }

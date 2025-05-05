@@ -1,14 +1,66 @@
 package game
 
+import gltf "../../third_party/gltf2"
+
 import m "../math"
 
-Joint :: m.Transform
+Joint :: struct {
+    name: string,
+    node_idx: int,   // From GLTF
+    parent:   int,   // From Skeleton.joints
+    children: []int, // From Skeleton.joints
+    
+    undeformed_mat:   m.Mat4, // From GLTF
+    inverse_bind_mat: m.Mat4, // From GLTF
+    
+    deformed_pos:    m.Vec3,
+    deformed_rot:    m.Quat,
+    deformed_scale:  m.Vec3,
+}
 
-Skin :: struct {
-    name:   string,
-    joints: []Joint, // joints[0] is the root (mixamorig:Hips)
-    ibm:    []m.Mat4,
-    anim:   Animation
+// Recursive
+load_joint :: proc(model: gltf.Data, skeleton: ^Skeleton, node_idx, parent: int) {
+    joint_idx := skeleton.node_to_joint_idx[node_idx]
+    joint := &skeleton.joints[joint_idx]
+    
+    joint.parent = parent
+    joint.children = make([]int, len(model.nodes[node_idx].children))
+    for _, i in model.nodes[node_idx].children {
+        child_idx := int(model.nodes[node_idx].children[i])
+        joint.children[i] = skeleton.node_to_joint_idx[child_idx]
+        load_joint(model, skeleton, child_idx, joint_idx)
+    }
+}
+
+// Recursive
+update_joint :: proc(skeleton: ^Skeleton, joint_idx: int) {
+    joint := &skeleton.joints[joint_idx]
+    
+    if joint.parent >= 0 {
+        skeleton.joint_matrices[joint_idx] = skeleton.joint_matrices[joint.parent] * skeleton.joint_matrices[joint_idx]
+    }
+    
+    for _, i in joint.children {
+        update_joint(skeleton, joint.children[i])
+    }
+}
+
+Skeleton :: struct {
+    name:     string,
+    joints:   []Joint,
+    anims:    []Animation,
+    node_to_joint_idx: map[int]int,
+    anim_idx: int,
+    
+    joint_matrices: []m.Mat4
+}
+
+anim_traverse :: proc(skeleton: Skeleton) {
+    
+}
+
+update_skeleton :: proc(skeleton: ^Skeleton) {
+    
 }
 
 Animation :: struct {
@@ -38,29 +90,31 @@ Channel :: struct {
         Scale,
     },
     sampler_idx: u32,
-    joint_idx: u32
+    node_idx: int
 }
 
-animation_continue :: proc(base: ^EntityBase) {
-    skin, ok := base.geom.skin.?
-    if !ok do return
+anim_continue :: proc(skeleton: ^Skeleton) {
+    anim := &skeleton.anims[skeleton.anim_idx]
 
-    skin.anim.current_time += dt
-    if skin.anim.current_time > skin.anim.end {
-        skin.anim.current_time -= skin.anim.end;
+    anim.current_time += dt
+    if anim.current_time > anim.end {
+        anim.current_time -= anim.end;
     }
 
-    for channel in skin.anim.channels {
-        sampler := skin.anim.samplers[channel.sampler_idx]
-        for timestamp, i in sampler.timestamps {
-            if !(skin.anim.current_time >= timestamp && skin.anim.current_time <= sampler.timestamps[i + 1]) do continue
+    for channel in anim.channels {
+        sampler := anim.samplers[channel.sampler_idx]
+        joint_idx := skeleton.node_to_joint_idx[channel.node_idx]
+        joint := skeleton.joints[joint_idx]
+        
+        for timestamp, i in sampler.timestamps[:len(sampler.timestamps)-1] {
+            if !(anim.current_time >= timestamp && anim.current_time <= sampler.timestamps[i + 1]) do continue
 
             switch sampler.interpolation {
             case .Linear:
-                t := (skin.anim.current_time - timestamp) / (sampler.timestamps[i + 1] - timestamp);
+                t := (anim.current_time - timestamp) / (sampler.timestamps[i + 1] - timestamp);
                 switch channel.path {
                 case .Translation:
-                    skin.joints[channel.joint_idx].pos = m.lerp(sampler.values[i], sampler.values[i + 1], t).xyz
+                    joint.deformed_pos = m.lerp(sampler.values[i], sampler.values[i + 1], t).xyz
 
                 case .Rotation:
                     q1: m.Quat
@@ -75,16 +129,16 @@ animation_continue :: proc(base: ^EntityBase) {
                     q2.z = sampler.values[i + 1].z;
                     q2.w = sampler.values[i + 1].w;
 
-                    skin.joints[channel.joint_idx].rot = m.euler(m.lerp(q1, q2, t))
+                    joint.deformed_rot = m.lerp(q1, q2, t)
 
                 case .Scale:
-                    skin.joints[channel.joint_idx].scale = m.lerp(sampler.values[i], sampler.values[i + 1], t).x
+                    joint.deformed_scale = m.lerp(sampler.values[i], sampler.values[i + 1], t).xyz
                 }
                 
             case .Step:
                 switch channel.path {
                 case .Translation:
-                    skin.joints[channel.joint_idx].pos = sampler.values[i].xyz
+                    joint.deformed_pos = sampler.values[i].xyz
 
                 case .Rotation:
                     q: m.Quat
@@ -93,12 +147,23 @@ animation_continue :: proc(base: ^EntityBase) {
                     q.z = sampler.values[i].z
                     q.w = sampler.values[i].w
                     
-                    skin.joints[channel.joint_idx].rot = m.euler(q)
+                    joint.deformed_rot = q
 
                 case .Scale:
-                    skin.joints[channel.joint_idx].scale = sampler.values[i].x
+                    joint.deformed_scale = sampler.values[i].xyz
                 }
             }
         }
+    }
+    
+    // Calculate final_matrix of each joint
+    for joint, i in skeleton.joints {
+        skeleton.joint_matrices[i] = m.to_matrix(joint.deformed_pos, joint.deformed_rot, joint.deformed_scale)
+    }
+    
+    update_joint(skeleton, 0)
+    
+    for _, i in skeleton.joints {
+        skeleton.joint_matrices[i] *= skeleton.joints[i].inverse_bind_mat
     }
 }

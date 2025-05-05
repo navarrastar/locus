@@ -2,6 +2,7 @@
 package game
 
 import "core:time"
+import gltf "../../third_party/gltf2"
 
 import sdl "vendor:sdl3"
 
@@ -34,3 +35,5 @@ shader_name_to_material_type := map[string]MaterialType {
 }
 
 phys_visualize: bool
+
+loaded_models: map[string]^gltf.Data

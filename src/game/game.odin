@@ -4,7 +4,7 @@ package game
 import "core:time"
 
 import m "../math"
-import t "../types"
+// import t "../types"
 
 
 init :: proc() {
@@ -69,24 +69,23 @@ should_shutdown :: proc() -> bool {
 }
 
 game_default_level :: proc() {
-   	player := Entity_Player {
-		transform = {pos = {-3, 0, -1}, rot = {0, 0, 0}, scale = 2},
+	player := Entity_Player {
+		transform = {pos = {-3, 0, -1}, rot = {0, 0, 0}, scale = 0.1},
 		geom = mesh("michelle"),
 		speed = 10,
 		phys = {layer = {.Layer0}, mask = {.Mask0}},
 		face_dir = {1, 0, 0},
 	}
 	world_spawn(&player)
-	
-	michelle := Entity_Opp {
-		name = "michelle",
-		transform = {pos = {0, 0, -10}, rot = {0, 0, 0}, scale = 2},
-		geom = mesh("michelle"),
-		health = t.DEFAULT_HEALTH,
-		phys = {layer = {.Layer0}, mask = {.Mask0}},
-	}
-	world_spawn(&michelle)
 
+	// michelle := Entity_Opp {
+	// 	name = "michelle",
+	// 	transform = {pos = {0, 0, -10}, rot = {0, 0, 0}, scale = 2},
+	// 	geom = mesh("michelle"),
+	// 	health = t.DEFAULT_HEALTH,
+	// 	phys = {layer = {.Layer0}, mask = {.Mask0}},
+	// }
+	// world_spawn(&michelle)
 
 
 	grid := Entity_Mesh {
@@ -121,8 +120,8 @@ game_default_level :: proc() {
 	// world_spawn(default_box)
 
 	random_triangle := Entity_Mesh {
-	    transform = { pos={0, 0, -5}, rot={0, 0, 0}, scale=1 },
-	    geom = triangle(material= .Test),
+		transform = {pos = {0, 0, -5}, rot = {0, 0, 0}, scale = 1},
+		geom = triangle(material = .Test),
 	}
 	world_spawn(&random_triangle)
 
