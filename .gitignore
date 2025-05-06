@@ -5,3 +5,4 @@ desmond
 .vscode/
 .zed
 info/.obsidian/
+*.bin

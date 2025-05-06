@@ -5,6 +5,7 @@
 
 #### **SSB, SF**
 
+- Parry - Only on melee attacks
 - Hitstun
 - Grab
 - Frame data (active, recovery, invincible) (except this is described as milliseconds, not frames/

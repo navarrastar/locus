@@ -109,11 +109,7 @@ loader_validate :: proc(model: ^gltf.Data, name: string) -> bool {
 	
 	// Validate animations
 	if len(model.animations) > 0 {
-		t_pose_found := false
 		for anim in model.animations {
-			if anim.name != nil && anim.name.? == "TPose" {
-				t_pose_found = true
-			}
 			
 			// Validate samplers
 			for sampler in anim.samplers {
@@ -141,9 +137,6 @@ loader_validate :: proc(model: ^gltf.Data, name: string) -> bool {
 				}
 			}
 		}
-		
-		// Check for required TPose animation
-		assert(t_pose_found)
 	}
 
 	return true

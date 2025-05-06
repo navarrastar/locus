@@ -35,3 +35,47 @@
     - They are almost dead and need every ounce of power they can find.
     - They believe the game will end before another auction phase takes place.
     - For some reason reading those three bullet points reminds me of freezing the canasta deck with a red 3
+    
+## **What should the gear be**
+- Weapons
+- Actives
+- Passives
+- Modifiers
+- Upgrades
+
+**Item?** - Weapons, Actives, and Passives are considered items
+
+**Weapons**
+- Can bring one into fight.
+- Consists of light, heavy, S1, and S2 moves.
+
+**Active Skills**
+- Can bring 4 into fight.
+- Just an ability on a cd.
+
+**Passive Skills**
+- Can bring 3 into fight.
+- Funtionally, they are like Bazaar skills or STS relics. But in those games, you only accumulate relics and dont choose which ones to equip at any given time. So in that sense, they are similar to Dungeonborne rings with set bonuses.
+
+**Modifiers**
+- Every item can have 2 of these on it
+- Functionally, they are like TFT items
+
+**Upgrades**
+- Some way to upgrade items you have, which unlocks branches of a skill tree for that item.
+- Functionally, thay are like Lost Ark Tripods 
+- Upgrading could happen when you come accross two items 
+
+### **Difference between TFT and Bazaar shops**
+**TFT**
+- All items have the same number of levels (3)
+- Only offers level 1 items.
+- Each item has a rarity which combined with your level, determines the likelyhood of seeing it in the shop
+- To upgrade items, you must acquire 3 of the same item, and they will combine into 1 item of increased level.
+
+**Bazaar**
+- Items have a differing number of levels
+- Offers items of all possible levels. Except if you already own an instance of the item, in that case it can only ever be offered at the same level as your instance.
+- The item's level combined with your level determines the likelyhood of seeing it in the shop
+- To upgrade items, you must buy the item again from the shop, and they will combine into 1 item of increased level.
+

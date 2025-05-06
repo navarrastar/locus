@@ -1,5 +1,7 @@
 package game
 
+// import "core:log"
+
 import gltf "../../third_party/gltf2"
 
 import m "../math"
@@ -24,11 +26,10 @@ load_joint :: proc(model: gltf.Data, skeleton: ^Skeleton, node_idx, parent: int)
     joint := &skeleton.joints[joint_idx]
     
     joint.parent = parent
-    joint.children = make([]int, len(model.nodes[node_idx].children))
-    for _, i in model.nodes[node_idx].children {
-        child_idx := int(model.nodes[node_idx].children[i])
-        joint.children[i] = skeleton.node_to_joint_idx[child_idx]
-        load_joint(model, skeleton, child_idx, joint_idx)
+    joint.children = make([]int, len(model.nodes[node_idx].children)) 
+    for child_idx, i in model.nodes[node_idx].children {
+        joint.children[i] = skeleton.node_to_joint_idx[int(child_idx)]
+        load_joint(model, skeleton, int(child_idx), joint_idx)
     }
 }
 
@@ -36,12 +37,12 @@ load_joint :: proc(model: gltf.Data, skeleton: ^Skeleton, node_idx, parent: int)
 update_joint :: proc(skeleton: ^Skeleton, joint_idx: int) {
     joint := &skeleton.joints[joint_idx]
     
-    if joint.parent >= 0 {
+    if joint.parent != -1 {
         skeleton.joint_matrices[joint_idx] = skeleton.joint_matrices[joint.parent] * skeleton.joint_matrices[joint_idx]
-    }
+    } 
     
-    for _, i in joint.children {
-        update_joint(skeleton, joint.children[i])
+    for child in joint.children {
+        update_joint(skeleton, child)
     }
 }
 
@@ -55,15 +56,8 @@ Skeleton :: struct {
     joint_matrices: []m.Mat4
 }
 
-anim_traverse :: proc(skeleton: Skeleton) {
-    
-}
-
-update_skeleton :: proc(skeleton: ^Skeleton) {
-    
-}
-
 Animation :: struct {
+    name:         string,
     samplers:     []Sampler,
     channels:     []Channel,
 	current_time: f32,
@@ -98,20 +92,20 @@ anim_continue :: proc(skeleton: ^Skeleton) {
 
     anim.current_time += dt
     if anim.current_time > anim.end {
-        anim.current_time -= anim.end;
+        anim.current_time = anim.start;
     }
 
     for channel in anim.channels {
         sampler := anim.samplers[channel.sampler_idx]
         joint_idx := skeleton.node_to_joint_idx[channel.node_idx]
-        joint := skeleton.joints[joint_idx]
+        joint := &skeleton.joints[joint_idx]
         
-        for timestamp, i in sampler.timestamps[:len(sampler.timestamps)-1] {
-            if !(anim.current_time >= timestamp && anim.current_time <= sampler.timestamps[i + 1]) do continue
+        for i in 0..<len(sampler.timestamps) - 1 {
+            if !(anim.current_time >= sampler.timestamps[i] && anim.current_time <= sampler.timestamps[i + 1]) do continue
 
             switch sampler.interpolation {
             case .Linear:
-                t := (anim.current_time - timestamp) / (sampler.timestamps[i + 1] - timestamp);
+                t := (anim.current_time - sampler.timestamps[i]) / (sampler.timestamps[i + 1] - sampler.timestamps[i]);
                 switch channel.path {
                 case .Translation:
                     joint.deformed_pos = m.lerp(sampler.values[i], sampler.values[i + 1], t).xyz
@@ -163,7 +157,7 @@ anim_continue :: proc(skeleton: ^Skeleton) {
     
     update_joint(skeleton, 0)
     
-    for _, i in skeleton.joints {
-        skeleton.joint_matrices[i] *= skeleton.joints[i].inverse_bind_mat
+    for joint, i in skeleton.joints {
+        skeleton.joint_matrices[i] *= joint.inverse_bind_mat
     }
 }

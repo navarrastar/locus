@@ -105,6 +105,6 @@ player_try_use_weapon :: proc(player: ^Entity_Player, slot: WeaponSlot) {
 player_cycle_anim :: proc(player: ^Entity_Player) {
     skin, ok := &player.geom.skin.?
     if !ok do return
-
-    skin.anim_idx = skin.anim_idx == len(skin.anims) - 1 ? 0 : skin.anim_idx + 1
+    
+    skin.anim_idx = (skin.anim_idx + 1) % len(skin.anims)
 }

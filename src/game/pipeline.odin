@@ -6,6 +6,7 @@ import "core:time"
 import sdl "vendor:sdl3"
 
 import m "../math"
+// import "core:math/linalg"
 
 
 pipeline_bind :: proc(pass: ^sdl.GPURenderPass, geom: Geometry) {

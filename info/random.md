@@ -11,3 +11,11 @@ S3 E8
 memcopy is my favorite operation
 
 The notion of sprinting towards a wall and right before you collide with it, it disapears.
+
+"We're here"
+"Where?"
+"At our destination"
+"Which is where?"
+"The place we are meant to be"
+"Where is that?"
+"Here"

@@ -18,7 +18,7 @@ struct Input {
     float4 color    : TEXCOORD1;
     float3 normal   : TEXCOORD2;
     float2 uv       : TEXCOORD3;
-    float4 tangent  : TEXCOORD4;
+    float3 tangent  : TEXCOORD4;
     float4 joints   : TEXCOORD5;
     float4 weights  : TEXCOORD6;
 };
@@ -53,7 +53,6 @@ Output main(Input input) {
     float4 worldPos = mul(model, skinnedPos);
     
     float4x4 viewProj = mul(proj, view);
-    float4x4 mvp = mul(viewProj, model);
     
     output.position = mul(viewProj, worldPos);
     output.color = input.color;

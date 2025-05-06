@@ -29,8 +29,8 @@ Geometry :: struct {
 
 Pos     :: m.Vec3
 Color   :: m.Vec4
-UV      :: m.Vec2
 Normal  :: m.Vec3
+UV      :: m.Vec2
 Tangent :: m.Vec3
 Joints  :: m.Vec4
 Weights :: m.Vec4
@@ -672,18 +672,18 @@ mesh :: proc(name: string) -> Geometry {
         vertices_dst[base_idx + 4] = f32(color[1])
         vertices_dst[base_idx + 5] = f32(color[2])
         vertices_dst[base_idx + 6] = f32(color[3])
+    
+        // Normal
+        normal := normals_array[i]
+        vertices_dst[base_idx + 7] = normal[0]
+        vertices_dst[base_idx + 8] = normal[1]
+        vertices_dst[base_idx + 9] = normal[2]
         
         // UV
         uv := uvs_array[i]
-        vertices_dst[base_idx + 7] = uv[0]
-        vertices_dst[base_idx + 8] = uv[1]
-        
-        // Normal
-        normal := normals_array[i]
-        vertices_dst[base_idx + 9] = normal[0]
-        vertices_dst[base_idx + 10] = normal[1]
-        vertices_dst[base_idx + 11] = normal[2]
-        
+        vertices_dst[base_idx + 10] = uv[0]
+        vertices_dst[base_idx + 11] = uv[1]
+
         // Tangent
         tangent := tangents_array[i]
         vertices_dst[base_idx + 12] = tangent[0]
@@ -730,7 +730,6 @@ mesh :: proc(name: string) -> Geometry {
     if len(model.skins) > 0 && len(model.animations) > 0 {
         gltf_skin := model.skins[0]
         
-        
         // Create skin
         skeleton: Skeleton
         skeleton.anims = make([]Animation, len(model.animations))
@@ -759,6 +758,7 @@ mesh :: proc(name: string) -> Geometry {
             joint.undeformed_mat = node.mat
             
             skeleton.node_to_joint_idx[int(node_idx)] = j
+            
         }
         
         load_joint(model^, &skeleton, int(gltf_skin.joints[0]), -1) // recursive
@@ -768,7 +768,8 @@ mesh :: proc(name: string) -> Geometry {
         
         // Process animations
         for gltf_anim, a in model.animations {
-            anim := Animation{
+            anim := Animation {
+                name = gltf_anim.name.?,
                 time_scale = 1,
                 weight = 1,
                 start = max(f32),
@@ -843,6 +844,7 @@ mesh :: proc(name: string) -> Geometry {
             
             // Store the animation in the skin
             skeleton.anims[a] = anim
+            
             }
         
         // Assign the skin to the geometry
@@ -1004,8 +1006,8 @@ Vertex_PosColNormUVTan :: struct {
 Vertex_PosColNormUVTanSkin :: struct {
 	pos:     Pos,
 	color:   Color,
-	uv:      UV,
 	normal:  Normal,
+	uv:      UV,
 	tangent: Tangent,
 	joints:  Joints,
 	weights: Weights,
