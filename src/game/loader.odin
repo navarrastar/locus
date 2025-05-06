@@ -34,10 +34,6 @@ loader_validate :: proc(model: ^gltf.Data, name: string) -> bool {
 	// base_color_texture
 	// Only one primitive on the mesh
 	// At least one animation with the name "TPose"
-	//
-	// Note: This function now supports loading JOINTS_0 and WEIGHTS_0 attributes for skinning
-	// The vertices will include 4 joint indices (as floats) and 4 weights,
-	// but the shader needs to be updated to actually use them for skinning.
 
 	assert(len(model.meshes) == 1)
 	assert(len(model.meshes[0].primitives) == 1)

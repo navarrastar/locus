@@ -1,6 +1,6 @@
 package game
 
-import "core:fmt"
+// import "core:fmt"
 import "core:mem"
 import sdl "vendor:sdl3"
 
@@ -24,7 +24,7 @@ Geometry :: struct {
 	diffuse:       ^Texture,
 	normal:        ^Texture,
 	emissive:      ^Texture,
-	skin:          Maybe(Skeleton)
+	skeleton:      Maybe(Skeleton)
 }
 
 Pos     :: m.Vec3
@@ -601,7 +601,7 @@ mesh :: proc(name: string) -> Geometry {
     vertex_size := size_of(Vertex_PosColNormUVTanSkin)
     vertex_stride := size_of(Vertex_PosColNormUVTanSkin) / size_of(f32)
     
-    // Load the model - validation is done in loader_validate
+    // Have a look at loader_validate() to see the assumptions made about the loaded model
     model := gltf_load(name)
     mesh := model.meshes[0]
     primitive := mesh.primitives[0]
@@ -623,18 +623,15 @@ mesh :: proc(name: string) -> Geometry {
     
     indices_dst := make([]Index, len(indices_array))
     for index, i in indices_array {
-        fmt.assertf(index <= 65535, "Index value %d exceeds u16 max value (65535)", index)
         indices_dst[i] = index
     }
 
     // Get Vertices
     position_accessor := model.accessors[position_accessor_idx]
     vertex_count := u32(position_accessor.count)
-    
-    // We need to create vertices array for all vertex attributes
     vertices_dst := make([]f32, vertex_count * u32(vertex_stride))
     
-    // Extract all attribute data
+    // Get attribute data
     positions_buffer := gltf.buffer_slice(model, position_accessor_idx)
     positions_array := positions_buffer.([][3]f32)
     
@@ -656,7 +653,6 @@ mesh :: proc(name: string) -> Geometry {
     weights_buffer := gltf.buffer_slice(model, weights_accessor_idx)
     weights_array := weights_buffer.([][4]f32)
     
-    // Fill the interleaved vertex data array
     for i := 0; i < int(vertex_count); i += 1 {
         base_idx := i * vertex_stride
         
@@ -726,7 +722,7 @@ mesh :: proc(name: string) -> Geometry {
         diffuse = diffuse,
     }
 
-    // Process skinning data if available
+    // Process skinning data
     if len(model.skins) > 0 && len(model.animations) > 0 {
         gltf_skin := model.skins[0]
         
@@ -848,7 +844,7 @@ mesh :: proc(name: string) -> Geometry {
             }
         
         // Assign the skin to the geometry
-        geometry.skin = skeleton
+        geometry.skeleton = skeleton
     }
 
     return geometry

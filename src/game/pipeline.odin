@@ -80,7 +80,7 @@ pipeline_push_buffers :: proc(pass: ^sdl.GPURenderPass, geom: Geometry) {
 		)
 		
 		skin_buffer: GPUSkinBuffer
-		for mat, i in geom.skin.?.joint_matrices {
+		for mat, i in geom.skeleton.?.joint_matrices {
 		    skin_buffer.joint_matrices[i] = mat
 		}
 		
