@@ -1,3 +1,0 @@
-[submodule "imgui"]
-	path = third_party/imgui
-	url = https://gitlab.com/nadako/odin-imgui.git
