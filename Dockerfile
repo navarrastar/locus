@@ -41,6 +41,9 @@ ENV CC=clang-18 \
 # Build with optimizations
 RUN make release-native
 
+# For some reason, these aren't building automatically
+RUN make -C "/home/apprunner/Odin/vendor/stb/src"
+
 # Add Odin to PATH
 ENV PATH="/home/apprunner/Odin:${PATH}"
 

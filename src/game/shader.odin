@@ -10,7 +10,7 @@ import "core:path/filepath"
 
 import sdl "vendor:sdl3"
 
-when ODIN_OS == .Windows {
+when ODIN_OS == .Windows || ODIN_OS == .Linux {
 	SHADER_FORMAT: sdl.GPUShaderFormatFlag : .SPIRV
 	SHADER_PATH_DST :: SHADER_DIR + "spirv/"
 	
