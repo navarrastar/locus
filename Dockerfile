@@ -13,6 +13,7 @@ USER root
 # Install dependencies
 RUN apt-get update && \
     apt-get install -y --no-install-recommends \
+    ca-certificates \
     clang-18 \
     llvm-18-dev \
     llvm-18-tools \
@@ -20,7 +21,7 @@ RUN apt-get update && \
     make \
     gcc \
     g++ \
-    libstdc++-dev
+    libstdc++-14-dev
 
 # Switch back to apprunner
 USER apprunner
@@ -29,7 +30,7 @@ WORKDIR /home/apprunner
 # Clone Odin compiler
 RUN git clone https://github.com/odin-lang/Odin
 
-# Build Odin compiler
+# Set working directory
 WORKDIR /home/apprunner/Odin
 
 # Set build environment variables
@@ -43,8 +44,14 @@ RUN make release-native
 # Add Odin to PATH
 ENV PATH="/home/apprunner/Odin:${PATH}"
 
-# Set working directory for server code
-WORKDIR /home/apprunner/server
+# Set working directory
+WORKDIR /home/apprunner
 
-# Run server command
-CMD ["odin run src/ ", "-define:SERVER=true", "-o:speed", ]
+# Clone Locke
+RUN git clone https://github.com/navarrastar/Locke
+
+# Set working directory
+WORKDIR /home/apprunner/Locke
+
+# Odin run server command
+CMD ["odin", "run", "src/", "-define:SERVER=true", "-o:speed"]
