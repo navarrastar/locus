@@ -4,7 +4,7 @@ import "core:log"
 
 import "game"
 
-
+SERVER :: #config(SERVER, false)
 
 main :: proc() {
 	context.logger = log.create_console_logger(
@@ -12,12 +12,21 @@ main :: proc() {
 	)
 	
    	game.ctx = context
-   	game.init()
-   	defer game.cleanup()
-
+    when !SERVER {
+       	game.init()
+       	defer game.cleanup()
+    } else {
+        game.server_init(game.SERVER_PORT)
+        // defer game.server_cleanup()
+    }
+    
 	for !game.should_shutdown() {
 	    free_all(context.temp_allocator)
-	    game.update()
+		when !SERVER {
+	        game.update()
+		} else {
+		    game.server_update()
+		}
 	}
 
 }

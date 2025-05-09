@@ -6,14 +6,8 @@ import "core:time"
 import m "../math"
 import t "../types"
 
-SERVER :: #config(SERVER, false)
 
 init :: proc() {
-    when SERVER {
-        steam_init()
-        server_init(SERVER_PORT)
-    } else {
-    
 	start_time = time.now()
 
 	world = new(World)
@@ -32,7 +26,6 @@ init :: proc() {
 	steam_init()
 	server_connect(SERVER_IP, SERVER_PORT)
 	
-    }
 }
 
 update :: proc() {

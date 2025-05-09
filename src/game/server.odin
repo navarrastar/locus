@@ -48,6 +48,10 @@ server_connect :: proc(ip6_str: string, port: u16) {
     )
 }
 
+server_update :: proc() {
+    
+}
+
 @(require_results)
 _ip6_string_to_bytes :: proc(s: string) -> (bytes: [16]u8, ok: bool) {
     s := s
