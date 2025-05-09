@@ -19,3 +19,7 @@ The notion of sprinting towards a wall and right before you collide with it, it 
 "The place we are meant to be"
 "Where is that?"
 "Here"
+
+When to think vs. when trial and error
+You must think when you are making design descisions, when you are asking yourself "What do I want?"
+You must use trial and error when you are looking for the best solution, when asking yourself "What's the best way to do this?"

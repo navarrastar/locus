@@ -122,9 +122,8 @@ anim_continue :: proc(skeleton: ^Skeleton) {
                     q2.y = sampler.values[i + 1].y;
                     q2.z = sampler.values[i + 1].z;
                     q2.w = sampler.values[i + 1].w;
-
-                    joint.deformed_rot = m.lerp(q1, q2, t)
-
+                    
+                    joint.deformed_rot = m.quaternion_slerp(q1, q2, t)
                 case .Scale:
                     joint.deformed_scale = m.lerp(sampler.values[i], sampler.values[i + 1], t).xyz
                 }
@@ -160,4 +159,21 @@ anim_continue :: proc(skeleton: ^Skeleton) {
     for joint, i in skeleton.joints {
         skeleton.joint_matrices[i] *= joint.inverse_bind_mat
     }
+}
+
+anim_find :: proc(skeleton: Skeleton, name: string) -> int {
+    for anim, i in skeleton.anims {
+        if anim.name == name {
+            return i
+        }
+    }
+    // If not found, look for TPose
+    name := name
+    name = "TPose"
+    for anim, i in skeleton.anims {
+        if anim.name == name {
+            return i
+        }
+    }
+    panic("")
 }

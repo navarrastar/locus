@@ -6,15 +6,21 @@ import "core:time"
 import m "../math"
 import t "../types"
 
+SERVER :: #config(SERVER, false)
 
 init :: proc() {
+    when SERVER {
+        steam_init()
+        server_init()
+    } else {
+    
 	start_time = time.now()
 
 	world = new(World)
 	render_state = new(RenderState)
 	ui_state = new(UIState)
 
-	window_init(context)
+	window_init()
 	renderer_init()
 	ui_init()
 
@@ -22,10 +28,16 @@ init :: proc() {
 	world_spawn(&root_entity)
 
 	game_default_level()
+	
+	steam_init()
+	server_connect(SERVER_IP, SERVER_PORT)
+	
+    }
 }
 
 update :: proc() {
 	window_poll_events()
+	run_steam_callbacks()
 
 	@(static) time_last_checked: time.Time
 	time_now := time.now()
@@ -62,6 +74,8 @@ cleanup :: proc() {
 	free(ui_state)
 	free(render_state)
 	free(world)
+	
+	steam_cleanup()
 }
 
 should_shutdown :: proc() -> bool {

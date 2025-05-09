@@ -1,10 +1,16 @@
 #+feature dynamic-literals
 package game
 
+import "base:runtime"
+
 import "core:time"
+import sdl "vendor:sdl3"
+
 import gltf "../../third_party/gltf2"
 
-import sdl "vendor:sdl3"
+import m "../math"
+
+ctx: runtime.Context
 
 SHADER_DIR :: "./assets/shaders/"
 MODEL_DIR :: "./assets/models/"
@@ -18,7 +24,7 @@ shader_should_check_for_changes: bool
 window: ^sdl.Window
 window_should_close: bool
 window_width, window_height: i32
-mouse_pos: [2]f32
+mouse_pos: m.Vec2
 swapchain_texture_format: sdl.GPUTextureFormat
 dt: f32
 

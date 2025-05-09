@@ -47,7 +47,7 @@
 
 **Weapons**
 - Can bring one into fight.
-- Consists of light, heavy, S1, and S2 moves.
+- Consists of melee, alternate, S1, and S2 moves.
 
 **Active Skills**
 - Can bring 4 into fight.

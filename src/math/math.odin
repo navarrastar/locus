@@ -13,7 +13,7 @@ IDENTITY_QUAT :: linalg.QUATERNIONF32_IDENTITY
 
 PI :: 3.14159265359
 
-DEFAULT_TRANSFORM :: Transform{
+DEFAULT_TRANSFORM :: Transform {
     pos = Vec3{0, 0, 0},
     rot = Vec3{0, 0, 0},
     scale = 1,
@@ -25,6 +25,11 @@ Transform :: struct {
     pos: Vec3,
     rot: Vec3,
     scale: f32,
+}
+
+Ray :: struct {
+    dir: Vec3,
+    pos: Vec3
 }
 
 quat :: proc{ quat_from_euler, quat_from_4f32 }
@@ -190,7 +195,10 @@ lerp :: proc(a, b, t: $T) -> T {
     return linalg.lerp(a, b, t)
 }
 
-// New functions for animation support
+@(require_results)
+quaternion_slerp :: proc(q1, q2: Quat, t: f32) -> Quat {
+    return linalg.quaternion_slerp(q1, q2, t)
+}
 
 @(require_results)
 matrix4_from_trs :: proc(translation: Vec3, rotation: Quat, scale: Vec3) -> Mat4 {
@@ -235,4 +243,8 @@ decompose_transform :: proc(mat: Mat4) -> (position: Vec3, rotation: Quat, scale
     rotation = linalg.quaternion_from_matrix4_f32(rot_mat)
     
     return position, rotation, scale
+}
+
+between :: proc(a, b, c: $T) -> bool {
+    return a > b && a < c
 }
