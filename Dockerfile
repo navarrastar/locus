@@ -48,7 +48,7 @@ ENV PATH="/home/apprunner/Odin:${PATH}"
 WORKDIR /home/apprunner
 
 # Clone Locke
-RUN git clone https://github.com/navarrastar/Locke
+RUN git clone https://github.com/navarrastar/Locke --recursive
 
 # Set working directory
 WORKDIR /home/apprunner/Locke
