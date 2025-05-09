@@ -1,0 +1,192 @@
+--- v0.11 WIP
+
+* Fixed support for static member functions, and added metadata on static-ness. (#73)
+* Made ImVector instantiations single-line (#77)
+* Added --custom-namespace-prefix and --replace-prefix to support custom naming schemes (#80)
+* Make the imconfig.h path use the parent directory by default if --backend is specified (#81)
+* **BREAKING CHANGE** Modified default output filename to be dcimgui.h instead of cimgui.h to avoid ambiguity (#80)
+* Removed unnecessary typedefs from structs with forward declarations to avoid warnings on C99 compilers (#82)
+* Fixed backend generation command-line to include imgui.h so that template expansions work (#83)
+* Fixed (somewhat) template expansion in the case where the instantiation is unique to a file that is not where the
+  template was originally declared (notably the Vulkan backend) (#83)
+* Added logic to move ImDrawIdx further up the file so that it doesn't end up used by ImVector expansions before the
+  actual declaration. (#87)
+
+--- v0.10
+
+* Added support for converting imgui_internal.h - many thanks to [@ZimM-LostPolygon] for doing the heavy lifting on this!
+
+--- v0.08
+
+* Rewrite the IM_ALLOC/IM_FREE macros to call the C versions of the respective functions, and rename them to
+  CIM_ALLOC and CIM_FREE to avoid conflicting with the original defines in #imgui.h (#69)
+* Remove IM_NEW/IM_PLACEMENT_NEW defines as they don't make sense outside of C++
+* Fixed IMGUI_CHECKVERSION to use the correct function, and renamed to CIMGUI_CHECKVERSION (#69)
+* Fixed parsing of type declarations with inline struct/class/etc tags (#71)
+* Added support for default value declarations on structure fields. These are currently only emitted as comments
+  in the C backend (as there is no immediately usable way to actually apply them), but they are in the metadata so
+  other bindings can make use of them if necessary.
+
+--- v0.07
+
+* Fixed a bug where unbounded arrays would get emitted to the metadata as having bounds of "[None]" instead of "[]". (#41)
+* Fixed structs not having associated line numbers in the JSON output (#39)
+* Added --imgui-include-dir option to allow the path to ImGui include files to be specified
+* Made imconfig.h get parsed by default to check for extra options, and added --config-include to allow custom config
+  files (of the type you would use the IMGUI_USER_CONFIG define to supply) to be included as well. This option reads
+  and uses such files but does not emit their contents to the .h file (on the assumption that they are getting included
+  there by regular means). It does however emit that information to the JSON output.
+* Standardised the rule that "metadata elements are omitted if not known" and removed cases where they were omitted
+  when not their default values. (#42)
+* Made the JSON generator include #defines with no actual value (#43)
+* Fixed a bug where DOM elements inside preprocessor conditionals didn't get enumerated under some circumstances
+* Added --generateunformattedfunctions to generate versions of string format functions that don't try and do any
+  formatting (many thanks to [@ZimM-LostPolygon] for the implementation!)
+* Fixed silly bug that caused is_flags_enum to always be set (#53)
+* Fixed parsing of preprocessor conditionals containing continuations (#50)
+* Added --imconfig-path to override path to imconfig.h
+* Made backends use CIMGUI_IMPL_API consistently
+* Worked around Win32 backend wndproc handler not getting generated (#51)
+* Added :: to function references in stubs to avoid name clash issues
+* Changed forward declarations to not use _t in situations where it causes problems with backends (#51)
+* Added a special case for forward-declared by-value structs in the DX12 backend
+* Added support for typedefs with an explicit type
+* Fixed backend headers to use backends/ folder for includes, and added some missing headers
+* Added --backend-include-dir to allow specifying the path where backend header files are found
+* Made "fmt" arguments non-nullable by default in the metadata (#57, thanks to [@pdoane] for the idea)
+* Fixed a bug where JSON metadata did not include fields that were in the else clause of a preprocessor conditional (#61)
+* Fixed GLFWwindow and GLFWmonitor getting incorrectly defined with an alternate tag name in the GLFW backend header (#63)
+* Added DirectX 9 and SDL2+OpenGL2 examples for Windows/Mac/Linux
+
+--- v0.06
+
+* In ImGui v1.90.0 WIP the callback variants of "ListBox()" and "ComboBox()" have a new function pointer type, but the
+  old type is still available as an overload. Disambiguating based solely on function pointer type is problematic, so
+  instead Dear Bindings renames the "old" versions of those two functions as "ImGui_ListBoxObsolete()" and
+  "ImGui_ComboBoxObsolete()" respectively.
+
+--- v0.05
+
+* Added source information giving the original file and line number of each element to the JSON output (#39)
+* Added type comprehension system, which generates a breakdown of type information in the JSON output
+* Added --nopassingstructsbyvalue flag to force struct parameters to be passed as pointers
+* **BREAKING CHANGE** Renamed the "type" field of classes/structs/unions in the JSON output (the one that contained
+  "struct"/"class"/"union") to "kind" to avoid confusion with the actual type
+* **BREAKING CHANGE** Removed the "names" field from field definitions in the JSON, and instead emit one field
+  for each distinct name defined in the original source (so "float x,y" is no longer represented in the JSON as a single
+  field with two names, but two separate fields). This simplifies the JSON by removing the concept of fields with
+  multiple names and makes field and argument definitions more consistent.
+* Renamed anonymous structures in the JSON from "<AnonymousN>" to "__anonymous_typeN" so as to avoid generating names
+  that are not valid identifiers (which was the original goal, but in practice that seemed to cause more problems than
+  it solved).
+* Anonymous types now get a description correctly emitted in the JSON at the point of use like other types.
+* **BREAKING CHANGE** Type declarations for arrays in the JSON now include the array bounds (in addition to having
+  is_array set to True)
+* Added an "is_nullable" annotation to pointers in type descriptions which indicates if the pointer is "allowed" to be
+  null. If no value is present this means Dear Bindings doesn't know (and code should assume it can be null). At present
+  this only affects pointers which were converted from references, as in that case we know the value should never be null.
+* Added experimental support for converting backends.
+* Added stdarg.h include (for va_list), and stddef.h (for size_t) back into the header.
+* Added templates for SDL2/3 backends and removed the old SDL ones.
+* Fixed a bug affecting backend generation where if an extern "C" block was immediately followed by a preprocessor
+  directive, it incorrectly omitted the brackets from the extern thinking that it was a single statement.
+* Flagged self arguments as non-nullable.
+* Added "original_class" member to JSON output for functions to indicate which class the function originally belonged to.
+* Added "is_instance_pointer" to JSON output for function arguments to indicate that the argument is the class instance
+  pointer (this/self).
+* **POSSIBLY BREAKING CHANGE** In the JSON output, the "value" field of enum values is now the calculated (integer) value
+  of the enum value, whilst "value_expression" contains the raw expression provided in the header file (which was
+  previously in "value"). The "value" field is calculated for all enum values, even those with no expression (i.e. the
+  implicit "last element +1" case).
+* Enum values ending with an underscore ("_") are now flagged with "is_internal" in the JSON output.
+* Enum values that represent total item counts (ending with "_COUNT") are now flagged with "is_count" in the JSON output.
+* Added "is_flags_enum" to the JSON output, which indicates if an enum should be treated as a bitfield rather than a
+  series of ordinal values.
+
+--- v0.04
+
+Put quotes back on string define values in the metadata
+Fixed incorrect codegen for synthetic #define elements
+Changed document filename to be the output filename (fixes include guard naming)
+Removed "#pragma once" removal (by default)
+Added a protective "extern C" around the majority of the header file, and removed it from the generated binding CPP
+Fixed blank lines emitting indenting
+Fixed invalid use of "static" in linkage specification [@rokups]
+Added alignment for enum/structure members and function names
+Added support for ImStr
+Added auto-generation of variant functions that take const char* instead of ImStr
+Suppressed generation of default argument variants for trivial cases and uncommon functions to reduce clutter
+Fixed incorrect disambiguation of function pairs that appear in the #if/#else blocks of the same preprocessor conditional
+Fixed incorrect generation of conditionals around code in #else blocks
+Added support for (read: removal of) constexpr
+Fixed disambiguation of default argument functions resulting in Ex functions with names that don't match their argument list (#11)
+Reduced number of Ex functions (when trailing arguments are trivial to fill, e.g. flags = 0, an Ex functions is not warranted). (#10)
+Split code_dom into multiple files for tidiness and refactored the modules a bit
+Improved the header template system somewhat and added a header to all files (#18, #22)
+Made it possible to configure types/names of "trivial" arguments that will not get default helpers generated (#24)
+Changed order of Ex functions relative to the original (#23)
+Added support for forcing disambiguation to disambiguate all variants of a function (#11)
+Added support to tell disambiguation to prioritise certain argument types (#11)
+Added function renaming and used it to tidy up ImGui_GetColorU32 and ImGui_IsRectVisible (#11, #25)
+Added support for forward declaration of enums and enum storage types
+Fixed issue where (void) to declarations of C functions with no arguments was omitted in some cases (#26) [@oskarnp]
+Fixed issue where the JSON representation of anonymous unions was incorrect (thanks to [@oskarnp] for the heads-up)
+Fixed regression where JSON output didn't include conditional struct fields (thanks to [@paralaxsd]) (#28)
+Fixed template file location when executed from a different directory to the Dear Bindings root [@madebr]
+Set regexp mode via parameters rather than inline to avoid triggering error check on Python 3.11 onwards (#31)
+
+--- v0.03
+
+Added alignment for comment indentation
+Added command line arguments
+Renamed templates to make them easier to match with source files
+Added struct forward declarations to metadata
+Added ImVector_Construct() and ImVector_Destruct() helpers
+Added typedefs to the metadata output
+Added parsed versions of complex types to the metadata output
+Added marking of internal API elements
+Fixed line comments on preprocessor directives getting treated as part of the directive
+Added better #define parsing
+Added defines to metadata output
+Tidied up directory structure a bit
+Fixed metadata conditionals not getting generated correctly for else blocks
+Fixed spelling of "preceding" in metadata
+Removed help reference to processing imgui_internal.h for now in case it confuses people
+
+--- v0.02
+
+Removed some more ImVector functions that don't compile correctly due to the lack of operator== on certain types
+Removed ImNewWrapper on newer ImGui versions
+Made LogTextV() only get added on ImGui version that don't supply it themselves
+Renamed IMGUI_API to CIMGUI_API
+Added (void) to declarations of C functions with no arguments
+Fixed field declarations not identifying the IMGUI_API prefix
+Made self parameters on const functions be const
+Got rid of excessive use of struct qualifier and added autogenerated forward declarations to compensate
+Removed unnecessary header files and made the stdbool.h include get added in a more sensible place
+Changed ImVec2/ImVec4 to be treated as by-value types and avoid new() in their constructors
+Removed hacky "original fully-qualified type" system and replaced it with "unmodified_element", which links all DOM elements back to a copy of the unmodified DOM
+Changed stub code generation to include both the original and generated headers, and cast correctly when passing arguments around
+Added lots of namespace-related shenanigans to deal with using namespaces to separate the C and C++ headers
+Added by-value struct conversion functions
+Added support for converting arrays of by-value types
+Removed all of the ImVector functions as they're probably more dangerous than useful
+Tidied up filename handling a bit
+Added support for base class lists on class declarations
+Added support for comments in a few more places
+Added support for adding a name prefix to all loose functions
+Make function name disambiguation aware of mutually-exclusive #ifdefs, and added manual exclusions
+Fixed escaped character literals not getting parsed correctly
+Fixed namespaced typenames not getting parsed correctly sometimes
+Fixed #error and #undef not getting parsed
+Made operator name parsing more generic and able to cope with things like "operator+=" without the previous ugly special-casing
+Made it possible to have multiple header files in the DOM
+Changed ImGui class prefix
+Fixed function/structure removal not removing associated template DOM element
+Added class member accessibility support
+Removed IM_VEC2_CLASS_EXTRA/IM_VEC4_CLASS_EXTRA from generated file
+Added metadata generator
+Fixed comments getting incorrectly treated as part of the expression for preprocessor conditionals
+Added generation of helper functions with defaulted arguments
+Improved function name disambiguation to use minimal number of suffixes necessary to ensure uniqueness
+Removed constructors/destructors that involve heap allocation

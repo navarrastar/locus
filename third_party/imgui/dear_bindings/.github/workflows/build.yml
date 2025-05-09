@@ -1,0 +1,82 @@
+name: build
+
+on:
+  push:
+  pull_request:
+  workflow_run:
+    # Use a workflow as a trigger of scheduled builds. Forked repositories can disable scheduled builds by disabling
+    # "scheduled" workflow, while maintaining ability to perform local CI builds.
+    workflows:
+      - scheduled
+    types:
+      - requested
+
+jobs:
+  Linux:
+    runs-on: ubuntu-22.04
+
+    strategy:
+      fail-fast: false
+      matrix:
+        branch:
+          - master
+          - docking
+        compiler:
+          - gcc
+          - clang
+        flag_nogeneratedefaultargfunctions:
+          - nogeneratedefaultargfunctions
+          - withgeneratedefaultargfunctions
+
+    steps:
+    # Checkout both repositories
+    - uses: actions/checkout@v4
+    - uses: actions/checkout@v4
+      with:
+        path: imgui
+        repository: ocornut/imgui
+        ref: ${{ matrix.branch }}
+        fetch-depth: 1
+
+    - name: Dependencies
+      run: |
+        sudo pip3 install ply
+
+    - name: Generate cimgui
+      run: >- 
+        ${{ 
+          format('python3 dear_bindings.py --output dcimgui {0} --generateunformattedfunctions imgui/imgui.h', 
+            matrix.flag_nogeneratedefaultargfunctions == 'nogeneratedefaultargfunctions' && '--nogeneratedefaultargfunctions' || '') 
+        }}
+    - name: Generate dcimgui_internal
+      run: >- 
+        ${{ 
+          format('python3 dear_bindings.py --output dcimgui_internal {0} --generateunformattedfunctions --include imgui/imgui.h imgui/imgui_internal.h', 
+            matrix.flag_nogeneratedefaultargfunctions == 'nogeneratedefaultargfunctions' && '--nogeneratedefaultargfunctions' || '') 
+        }}
+    - name: Build
+      run: |
+        ${{ matrix.compiler }}                  \
+          -D${{ matrix.flag_nogeneratedefaultargfunctions == 'withgeneratedefaultargfunctions' && 'CIMGUI_WITH_GENERATE_DEFAULT_ARG_FUNCTIONS' || 'CIMGUI_NO_GENERATE_DEFAULT_ARG_FUNCTIONS' }} \
+          -DCIMGUI_WITH_GENERATE_UNFORMATTED_FUNCTIONS \
+          -o example_null                       \
+          -Iimgui -I.                           \
+          -x c examples/example_null/main.c     \
+          -x c++ dcimgui.cpp                     \
+          -x c++ dcimgui_internal.cpp            \
+          imgui/imgui.cpp                       \
+          imgui/imgui_demo.cpp                  \
+          imgui/imgui_draw.cpp                  \
+          imgui/imgui_tables.cpp                \
+          imgui/imgui_widgets.cpp               \
+          -lm -lstdc++
+
+    - name: Run
+      run: ./example_null
+
+    - uses: actions/upload-artifact@v4
+      with:
+        name: dear_bindings_${{ matrix.branch }}_${{ matrix.compiler }}_${{ matrix.flag_nogeneratedefaultargfunctions }}
+        path: |
+          dcimgui.*
+          dcimgui_internal.*
