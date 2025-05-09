@@ -11,7 +11,7 @@ SERVER :: #config(SERVER, false)
 init :: proc() {
     when SERVER {
         steam_init()
-        server_init()
+        server_init(SERVER_PORT)
     } else {
     
 	start_time = time.now()
