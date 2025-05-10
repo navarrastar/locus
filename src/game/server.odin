@@ -9,18 +9,50 @@ import "core:mem"
 
 import steam "../../third_party/steamworks"
 
-SERVER_IP   :: "2600:3c00::f03c:95ff:fe44:bdfc"
-SERVER_PORT :: 27015
+SERVER_IP_STR :: "2600:3c00::f03c:95ff:fe44:bdfc"
+SERVER_IP:    [16]u8
+SERVER_PORT   :: 27015
+QUERY_PORT    :: 27030
 
 server_state: struct {
+    game_server: ^steam.IGameServer,
 	net_sockets: ^steam.INetworkingSockets,
-	port: u16,
+	err_msg: steam.SteamErrMsg
 }
 
 server_init :: proc(port: u16) {
+    ip6_bytes, ok := _ip6_string_to_bytes(SERVER_IP_STR)
+    log.assertf(ok, "Error parsing ip6 address: %v", SERVER_IP_STR)
+    SERVER_IP = ip6_bytes
+    
     networking_ip := &steam.SteamNetworkingIPAddr {
-        port = port
+        ipv6 = ip6_bytes,
+        port = port,
     }
+    
+    log.info("Starting SteamGameServer")
+    
+    res := steam.SteamGameServer_InitEx(
+        0,
+        SERVER_PORT,
+        QUERY_PORT,
+        .NoAuthentication,
+        "0.0.1",
+        &server_state.err_msg
+    )
+    
+    log.assertf(res == .OK, "SteamGameServer_InitEx: ", res)
+    
+    steam.GameServer_SetProduct(server_state.game_server, "locus")
+    steam.GameServer_SetGameDescription(server_state.game_server, "Your Game Server Description"); // Replace with description
+    steam.GameServer_SetGameTags(server_state.game_server, "pvp,multiplayer"); // Add relevant tags
+    steam.GameServer_SetMaxPlayerCount(server_state.game_server, 4); // Set max players
+    steam.GameServer_SetPasswordProtected(server_state.game_server, false); // Set if password protected
+    steam.GameServer_SetServerName(server_state.game_server, "My First Server"); // Set server name
+    
+    steam.GameServer_LogOnAnonymous(server_state.game_server)
+    
+    
     
 	steam.NetworkingSockets_CreateListenSocketIP(
 		server_state.net_sockets,

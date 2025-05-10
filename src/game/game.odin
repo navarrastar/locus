@@ -24,7 +24,7 @@ init :: proc() {
 	game_default_level()
 	
 	steam_init()
-	server_connect(SERVER_IP, SERVER_PORT)
+	server_connect(SERVER_IP_STR, SERVER_PORT)
 	
 }
 
