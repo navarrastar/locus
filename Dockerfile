@@ -17,11 +17,25 @@ RUN apt-get update && \
     clang-18 \
     llvm-18-dev \
     llvm-18-tools \
+    libc++-18-dev \
+    libc++abi-18-dev \
     git \
     make \
     gcc \
     g++ \
-    libstdc++-14-dev
+    libstdc++-14-dev    
+    
+# Add LLVM/Clang to PATH and create symlinks
+ENV PATH="/usr/lib/llvm-18/bin:$PATH"
+RUN ln -s /usr/bin/clang-18 /usr/bin/clang && \
+    ln -s /usr/bin/clang++-18 /usr/bin/clang++ && \
+    ln -s /usr/bin/llvm-config-18 /usr/bin/llvm-config
+
+# Verify toolchain
+RUN which clang && \
+    which clang++ && \
+    which llvm-config && \
+    llvm-config --version
 
 # Switch back to apprunner
 USER apprunner
