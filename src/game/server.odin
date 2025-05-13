@@ -26,6 +26,16 @@ server_state: struct {
 }
 
 server_init :: proc(port: u16) {
+    if err := steam.InitFlat(&server_state.err_msg); err != .OK {
+           err_str := string(cast(cstring)&server_state.err_msg[0])
+           log.panicf("steam.InitFlat failed with code '{}' and message \"{}\"", err, err_str)
+       }
+       
+       steam.Client_SetWarningMessageHook(steam.Client(), _steam_debug_text_hook)
+   
+       steam.ManualDispatch_Init()
+
+    
     networking_ip := &steam.SteamNetworkingIPAddr {
         ipv6 = SERVER_IP,
         port = port,
