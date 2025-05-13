@@ -1,4 +1,4 @@
-### **Foster liveliness.**
+### **Remind the player that other people are currently playing this game**
 
 ### **Give the player game states that nobody else has ever gotten**
 

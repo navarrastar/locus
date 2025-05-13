@@ -24,7 +24,6 @@
 - **Knockup**: unable to perform any action until you recover. Getting staggered while knocked up will re knock you up, allowing opponents to juggle you.
 - **Stun**: unable to perform any action until the next time you are hit, or the duration of the stun expires
 
-
 **Poise**
 - **None**
 - **Low**: immune to Stagger
@@ -33,3 +32,6 @@
 
 ### **Victory or Death**
 - when both player are on their final life, a cool screen pops up with a cool announcer saying "Victory or Death" similar to "Sudden Death" in ssb
+
+
+- On the first round, you only have 2 ablilities, you get the other two after each round.

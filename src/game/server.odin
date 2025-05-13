@@ -14,6 +14,11 @@ SERVER_IP:    [16]u8
 SERVER_PORT   :: 27015
 QUERY_PORT    :: 27030
 
+@(init)
+_init_server_ip :: proc() {
+    SERVER_IP, _ = _ip6_string_to_bytes(SERVER_IP_STR)
+}
+
 server_state: struct {
     game_server: ^steam.IGameServer,
 	net_sockets: ^steam.INetworkingSockets,
@@ -21,12 +26,8 @@ server_state: struct {
 }
 
 server_init :: proc(port: u16) {
-    ip6_bytes, ok := _ip6_string_to_bytes(SERVER_IP_STR)
-    log.assertf(ok, "Error parsing ip6 address: %v", SERVER_IP_STR)
-    SERVER_IP = ip6_bytes
-    
     networking_ip := &steam.SteamNetworkingIPAddr {
-        ipv6 = ip6_bytes,
+        ipv6 = SERVER_IP,
         port = port,
     }
     
@@ -41,18 +42,21 @@ server_init :: proc(port: u16) {
         &server_state.err_msg
     )
     
+    log.info(res)
+    
     log.assertf(res == .OK, "SteamGameServer_InitEx: ", res)
     
+    server_state.game_server = steam.GameServer()
+    server_state.net_sockets = steam.NetworkingSockets_SteamAPI()
+    
     steam.GameServer_SetProduct(server_state.game_server, "locus")
-    steam.GameServer_SetGameDescription(server_state.game_server, "Your Game Server Description"); // Replace with description
-    steam.GameServer_SetGameTags(server_state.game_server, "pvp,multiplayer"); // Add relevant tags
-    steam.GameServer_SetMaxPlayerCount(server_state.game_server, 4); // Set max players
-    steam.GameServer_SetPasswordProtected(server_state.game_server, false); // Set if password protected
-    steam.GameServer_SetServerName(server_state.game_server, "My First Server"); // Set server name
+    steam.GameServer_SetGameDescription(server_state.game_server, "Game Server Description");
+    steam.GameServer_SetGameTags(server_state.game_server, "pvp,multiplayer");
+    steam.GameServer_SetMaxPlayerCount(server_state.game_server, 4);
+    steam.GameServer_SetPasswordProtected(server_state.game_server, false);
+    steam.GameServer_SetServerName(server_state.game_server, "My First Server");
     
     steam.GameServer_LogOnAnonymous(server_state.game_server)
-    
-    
     
 	steam.NetworkingSockets_CreateListenSocketIP(
 		server_state.net_sockets,
@@ -82,6 +86,10 @@ server_connect :: proc(ip6_str: string, port: u16) {
 
 server_update :: proc() {
     
+}
+
+server_is_ready :: proc() -> bool {
+    return false
 }
 
 @(require_results)

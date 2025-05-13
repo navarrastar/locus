@@ -176,7 +176,8 @@ player_set_anim_state :: proc(player: ^Entity_Player) {
         anim_name = "Idle"
     }
     
-    skeleton.anim_idx = anim_find(skeleton^, anim_name)
+    skeleton.next_anim_idx = anim_find(skeleton^, anim_name)
+    // skeleton.anim_idx = anim_find(skeleton^, anim_name)
 }
 
 player_try_use_weapon :: proc(player: ^Entity_Player, slot: WeaponSlot) {

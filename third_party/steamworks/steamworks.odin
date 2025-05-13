@@ -3879,6 +3879,7 @@ NetworkingMessages_SteamAPI :: SteamNetworkingMessages_SteamAPI_v002
 NetworkingSockets_SteamAPI :: SteamNetworkingSockets_SteamAPI_v012
 NetworkingUtils_SteamAPI :: SteamNetworkingUtils_SteamAPI_v004
 Timeline :: SteamTimeline_v001
+GameServer :: SteamGameServer_v015
 
 // ---------------
 // Interface types
@@ -4175,6 +4176,7 @@ foreign lib {
     SteamNetworkingSockets_SteamAPI_v012 :: proc() -> ^INetworkingSockets ---
     SteamNetworkingUtils_SteamAPI_v004 :: proc() -> ^INetworkingUtils ---
     SteamTimeline_v001 :: proc() -> ^ITimeline ---
+    SteamGameServer_v015 :: proc() -> ^IGameServer ---
 }
 
 // -------------------------------------------

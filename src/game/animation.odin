@@ -6,7 +6,15 @@ import gltf "../../third_party/gltf2"
 
 import m "../math"
 
+JointTransform :: struct {
+    pos:   m.Vec3,
+    rot:   m.Quat,
+    scale: m.Vec3
+}
+
 Joint :: struct {
+    using transform: JointTransform,
+    
     name: string,
     node_idx: int,   // From GLTF
     parent:   int,   // From Skeleton.joints
@@ -15,9 +23,6 @@ Joint :: struct {
     undeformed_mat:   m.Mat4, // From GLTF
     inverse_bind_mat: m.Mat4, // From GLTF
     
-    deformed_pos:    m.Vec3,
-    deformed_rot:    m.Quat,
-    deformed_scale:  m.Vec3,
 }
 
 // Recursive
@@ -50,10 +55,23 @@ Skeleton :: struct {
     name:     string,
     joints:   []Joint,
     anims:    []Animation,
-    node_to_joint_idx: map[int]int,
-    anim_idx: int,
     
-    joint_matrices: []m.Mat4
+    // Set anim_idx directly if you want the anim
+    // to immediatly change (no blending)
+    anim_idx:      int,
+    
+    // Set next_anim_idx if you want the current anim
+    // to blend into this one 
+    next_anim_idx: int,
+    
+    // Handled by ...?
+    _blend_factor:  f32,
+    
+    joint_matrices: []m.Mat4,
+    
+    // Should be removed. It's only used
+    // during loading in mesh()
+    node_to_joint_idx: map[int]int,
 }
 
 Animation :: struct {
@@ -83,82 +101,47 @@ Channel :: struct {
         Rotation,
         Scale,
     },
-    sampler_idx: u32,
-    node_idx: int
+    
+    joint: ^Joint,
+    sampler: ^Sampler,
 }
 
-anim_continue :: proc(skeleton: ^Skeleton) {
+skeleton_update :: proc(skeleton: ^Skeleton) {
     anim := &skeleton.anims[skeleton.anim_idx]
 
     anim.current_time += dt
     if anim.current_time > anim.end {
-        anim.current_time = anim.start;
+        anim.current_time = anim.start
     }
 
-    for channel in anim.channels {
-        sampler := anim.samplers[channel.sampler_idx]
-        joint_idx := skeleton.node_to_joint_idx[channel.node_idx]
-        joint := &skeleton.joints[joint_idx]
-        
-        for i in 0..<len(sampler.timestamps) - 1 {
-            if !(anim.current_time >= sampler.timestamps[i] && anim.current_time <= sampler.timestamps[i + 1]) do continue
-
-            switch sampler.interpolation {
-            case .Linear:
-                t := (anim.current_time - sampler.timestamps[i]) / (sampler.timestamps[i + 1] - sampler.timestamps[i]);
-                switch channel.path {
-                case .Translation:
-                    joint.deformed_pos = m.lerp(sampler.values[i], sampler.values[i + 1], t).xyz
-
-                case .Rotation:
-                    q1: m.Quat
-                    q1.x = sampler.values[i].x;
-                    q1.y = sampler.values[i].y;
-                    q1.z = sampler.values[i].z;
-                    q1.w = sampler.values[i].w;
-
-                    q2: m.Quat
-                    q2.x = sampler.values[i + 1].x;
-                    q2.y = sampler.values[i + 1].y;
-                    q2.z = sampler.values[i + 1].z;
-                    q2.w = sampler.values[i + 1].w;
-                    
-                    joint.deformed_rot = m.quaternion_slerp(q1, q2, t)
-                case .Scale:
-                    joint.deformed_scale = m.lerp(sampler.values[i], sampler.values[i + 1], t).xyz
-                }
-                
-            case .Step:
-                switch channel.path {
-                case .Translation:
-                    joint.deformed_pos = sampler.values[i].xyz
-
-                case .Rotation:
-                    q: m.Quat
-                    q.x = sampler.values[i].x
-                    q.y = sampler.values[i].y
-                    q.z = sampler.values[i].z
-                    q.w = sampler.values[i].w
-                    
-                    joint.deformed_rot = q
-
-                case .Scale:
-                    joint.deformed_scale = sampler.values[i].xyz
-                }
-            }
-        }
+    for &channel in anim.channels {
+        _anim_update_channel(anim^, &channel)
     }
     
-    // Calculate final_matrix of each joint
-    for joint, i in skeleton.joints {
-        skeleton.joint_matrices[i] = m.to_matrix(joint.deformed_pos, joint.deformed_rot, joint.deformed_scale)
+    if skeleton.next_anim_idx == skeleton.anim_idx {
+        _anim_set_joint_matrices(skeleton)
+        return 
     }
     
-    update_joint(skeleton, 0)
+    _anim_handle_blending(skeleton)
+    _anim_set_joint_matrices(skeleton)
     
-    for joint, i in skeleton.joints {
-        skeleton.joint_matrices[i] *= joint.inverse_bind_mat
-    }
+    // next_anim := &skeleton.anims[skeleton.next_anim_idx]
+    // next_anim.current_time += dt
+    // if next_anim.current_time > next_anim.end {
+    //     next_anim.current_time = next_anim.start
+    // }
+    
+    // for &channel in next_anim.channels {
+    //     _anim_update_channel(next_anim^, &channel)
+    // }
+}
+
+_anim_handle_blending :: proc(skeleton: ^Skeleton) {
+    anim := skeleton.anims[skeleton.next_anim_idx]
+    
+    joint_transforms := make([]JointTransform, len(skeleton.joints))
+    
 }
 
 anim_find :: proc(skeleton: Skeleton, name: string) -> int {
@@ -177,3 +160,125 @@ anim_find :: proc(skeleton: Skeleton, name: string) -> int {
     }
     panic("")
 }
+
+_anim_set_joint_matrices :: proc(skeleton: ^Skeleton) {
+    for joint, i in skeleton.joints {
+        skeleton.joint_matrices[i] = m.to_matrix(joint.pos, joint.rot, joint.scale)
+    }
+    
+    update_joint(skeleton, 0)
+    
+    for joint, i in skeleton.joints {
+        skeleton.joint_matrices[i] *= joint.inverse_bind_mat
+    }
+}
+
+_anim_update_channel :: proc(anim: Animation, channel: ^Channel) {
+    sampler := channel.sampler
+    joint := channel.joint
+    
+    for i in 0..<len(sampler.timestamps) - 1 {
+        if !(anim.current_time >= sampler.timestamps[i] && anim.current_time <= sampler.timestamps[i + 1]) do continue
+    
+        switch sampler.interpolation {
+        case .Linear:
+            t := (anim.current_time - sampler.timestamps[i]) / (sampler.timestamps[i + 1] - sampler.timestamps[i]);
+            switch channel.path {
+            case .Translation:
+                joint.pos = m.lerp(sampler.values[i], sampler.values[i + 1], t).xyz
+                
+            case .Rotation:
+                q1: m.Quat
+                q1.x = sampler.values[i].x;
+                q1.y = sampler.values[i].y;
+                q1.z = sampler.values[i].z;
+                q1.w = sampler.values[i].w;
+
+                q2: m.Quat
+                q2.x = sampler.values[i + 1].x;
+                q2.y = sampler.values[i + 1].y;
+                q2.z = sampler.values[i + 1].z;
+                q2.w = sampler.values[i + 1].w;
+                
+                joint.rot = m.quaternion_slerp(q1, q2, t)
+            case .Scale:
+                joint.scale = m.lerp(sampler.values[i], sampler.values[i + 1], t).xyz
+            }
+            
+        case .Step:
+            switch channel.path {
+            case .Translation:
+                joint.pos = sampler.values[i].xyz
+
+            case .Rotation:
+                q: m.Quat
+                q.x = sampler.values[i].x
+                q.y = sampler.values[i].y
+                q.z = sampler.values[i].z
+                q.w = sampler.values[i].w
+                
+                joint.rot = q
+
+            case .Scale:
+                joint.scale = sampler.values[i].xyz
+            }
+        }
+    }
+}
+
+// _anim_continue :: proc(anim: ^Animation, joint: ^Joint) {
+//     for channel in anim.channels {
+//         sampler := anim.samplers[channel.sampler_idx]
+//         joint_idx := skeleton.node_to_joint_idx[channel.node_idx]
+//         joint := &skeleton.joints[joint_idx]
+        
+//         for i in 0..<len(sampler.timestamps) - 1 {
+//             if !(anim.current_time >= sampler.timestamps[i] && anim.current_time <= sampler.timestamps[i + 1]) do continue
+
+//             switch sampler.interpolation {
+//             case .Linear:
+//                 t := (anim.current_time - sampler.timestamps[i]) / (sampler.timestamps[i + 1] - sampler.timestamps[i]);
+//                 switch channel.path {
+//                 case .Translation:
+//                     joint.deformed_pos = m.lerp(sampler.values[i], sampler.values[i + 1], t).xyz
+
+//                 case .Rotation:
+//                     q1: m.Quat
+//                     q1.x = sampler.values[i].x;
+//                     q1.y = sampler.values[i].y;
+//                     q1.z = sampler.values[i].z;
+//                     q1.w = sampler.values[i].w;
+
+//                     q2: m.Quat
+//                     q2.x = sampler.values[i + 1].x;
+//                     q2.y = sampler.values[i + 1].y;
+//                     q2.z = sampler.values[i + 1].z;
+//                     q2.w = sampler.values[i + 1].w;
+                    
+//                     joint.deformed_rot = m.quaternion_slerp(q1, q2, t)
+//                 case .Scale:
+//                     joint.deformed_scale = m.lerp(sampler.values[i], sampler.values[i + 1], t).xyz
+//                 }
+                
+//             case .Step:
+//                 switch channel.path {
+//                 case .Translation:
+//                     joint.deformed_pos = sampler.values[i].xyz
+
+//                 case .Rotation:
+//                     q: m.Quat
+//                     q.x = sampler.values[i].x
+//                     q.y = sampler.values[i].y
+//                     q.z = sampler.values[i].z
+//                     q.w = sampler.values[i].w
+                    
+//                     joint.deformed_rot = q
+
+//                 case .Scale:
+//                     joint.deformed_scale = sampler.values[i].xyz
+//                 }
+//             }
+//         }
+//     }
+   
+// }

@@ -37,10 +37,17 @@
     - For some reason reading those three bullet points reminds me of freezing the canasta deck with a red 3
     
 ## **What should the gear be**
-- Weapons
-- Actives
+- Consumables
+  - Health Potion
+  
+- Throwables
+  - Molotov
+  - Fireball
+  
+
 - Passives
 - Modifiers
+- Skill Points
 - Upgrades
 
 **Item?** - Weapons, Actives, and Passives are considered items
@@ -79,3 +86,9 @@
 - The item's level combined with your level determines the likelyhood of seeing it in the shop
 - To upgrade items, you must buy the item again from the shop, and they will combine into 1 item of increased level.
 
+**General idea**
+After every fight, this is what happens:
+- A wheel is spun that determines how many skill points are given out to everyone.
+- Each player is awarded a Chip.
+- The Chip Auction is held. (Shown 3 tft items)
+- The player is shown 

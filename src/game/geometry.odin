@@ -748,9 +748,9 @@ mesh :: proc(name: string) -> Geometry {
             joint.inverse_bind_mat = ibm_data.([]m.Mat4)[j]
             
             node := model.nodes[node_idx]
-            joint.deformed_pos   = node.translation
-            joint.deformed_rot   = node.rotation
-            joint.deformed_scale = node.scale
+            joint.pos   = node.translation
+            joint.rot   = node.rotation
+            joint.scale = node.scale
             joint.undeformed_mat = node.mat
             
             skeleton.node_to_joint_idx[int(node_idx)] = j
@@ -820,9 +820,9 @@ mesh :: proc(name: string) -> Geometry {
             for gltf_channel, i in gltf_anim.channels {
                 channel := &anim.channels[i]
                 
-                channel.sampler_idx = gltf_channel.sampler
+                channel.sampler = &anim.samplers[gltf_channel.sampler]
                 target := gltf_channel.target
-                channel.node_idx = int(target.node.?)
+                channel.joint = &skeleton.joints[skeleton.node_to_joint_idx[int(target.node.?)]]
                 
                 // Set the target path
                 switch target.path {

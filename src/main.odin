@@ -22,6 +22,7 @@ main :: proc() {
     
 	for !game.should_shutdown() {
 	    free_all(context.temp_allocator)
+
 		when !SERVER {
 	        game.update()
 		} else {

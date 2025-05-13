@@ -116,7 +116,7 @@ world_update_entity :: proc(e: ^Entity) {
 	
 	base := cast(^EntityBase)e
 	if skeleton, ok := base.geom.skeleton.?; ok {
-	    anim_continue(&skeleton)
+	    skeleton_update(&skeleton)
 	}
 	
 	base.geom.model_matrix = m.to_matrix(base.transform)

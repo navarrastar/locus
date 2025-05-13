@@ -15,7 +15,6 @@ import steam "../../third_party/steamworks"
 number_of_current_players: int
 
 steam_init :: proc () {
-
     APP_ID :: 3070970 
     if steam.RestartAppIfNecessary(APP_ID) {
         log.info("Launching app through steam...")
@@ -36,6 +35,7 @@ steam_init :: proc () {
 
     log.info("Steam User Name:", string(steam.Friends_GetPersonaName(steam.Friends())))
     log.info("Steam User State:", steam.Friends_GetPersonaState(steam.Friends()))
+    
 }
 
 steam_cleanup :: proc() {
