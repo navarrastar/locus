@@ -26,16 +26,6 @@ server_state: struct {
 }
 
 server_init :: proc(port: u16) {
-    if err := steam.InitFlat(&server_state.err_msg); err != .OK {
-           err_str := string(cast(cstring)&server_state.err_msg[0])
-           log.panicf("steam.InitFlat failed with code '{}' and message \"{}\"", err, err_str)
-       }
-       
-       steam.Client_SetWarningMessageHook(steam.Client(), _steam_debug_text_hook)
-   
-       steam.ManualDispatch_Init()
-
-    
     networking_ip := &steam.SteamNetworkingIPAddr {
         ipv6 = SERVER_IP,
         port = port,
@@ -57,7 +47,6 @@ server_init :: proc(port: u16) {
     log.assertf(res == .OK, "SteamGameServer_InitEx: ", res)
     
     server_state.game_server = steam.GameServer()
-    server_state.net_sockets = steam.NetworkingSockets_SteamAPI()
     
     steam.GameServer_SetProduct(server_state.game_server, "locus")
     steam.GameServer_SetGameDescription(server_state.game_server, "Game Server Description");
@@ -68,12 +57,7 @@ server_init :: proc(port: u16) {
     
     steam.GameServer_LogOnAnonymous(server_state.game_server)
     
-	steam.NetworkingSockets_CreateListenSocketIP(
-		server_state.net_sockets,
-		networking_ip,
-		{}, // nOptions
-		{}, // pOptions
-	)
+
 	
 }
 
@@ -85,13 +69,7 @@ server_connect :: proc(ip6_str: string, port: u16) {
         ipv6 = ip6_bytes,
         port = port,
     }
-    
-    steam.NetworkingSockets_ConnectByIPAddress(
-        server_state.net_sockets,
-        networking_ip,
-        {},
-        {},
-    )
+
 }
 
 server_update :: proc() {
