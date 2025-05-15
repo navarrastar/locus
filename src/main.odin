@@ -17,7 +17,7 @@ main :: proc() {
        	defer game.cleanup()
     } else {
         game.server_init(game.SERVER_PORT)
-        // defer game.server_cleanup()
+        defer game.server_cleanup()
     }
     
 	for !game.should_shutdown() {

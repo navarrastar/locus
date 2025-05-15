@@ -11,6 +11,9 @@ import "core:strings"
 import steam "../../third_party/steamworks"
 
 
+steam_user: struct {
+    user: ^steam.IUser
+}
 
 number_of_current_players: int
 
@@ -35,6 +38,8 @@ steam_init :: proc () {
 
     log.info("Steam User Name:", string(steam.Friends_GetPersonaName(steam.Friends())))
     log.info("Steam User State:", steam.Friends_GetPersonaState(steam.Friends()))
+    
+    steam_user.user = steam.User()
     
 }
 

@@ -24,7 +24,11 @@ init :: proc() {
 	game_default_level()
 	
 	steam_init()
-	if server_is_ready() do server_connect(SERVER_IP_STR, SERVER_PORT)
+	if server_is_ready() {
+	    if !user_connect_to_server(steam_user.user) {
+			panic("User failed to connect to server")
+		}
+	}
 	
 }
 
