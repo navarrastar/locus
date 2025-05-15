@@ -1,0 +1,1 @@
+odin run /src -define:SERVER=true
