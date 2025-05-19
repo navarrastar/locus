@@ -113,6 +113,7 @@ server_init :: proc(port: u16) {
     
     log.info("listen_tcp successful")
     
+    server_state.bRunning = true
     server_state.listen_thread = thread.create_and_start(_server_proc_connection_listener)
 }
 
@@ -229,6 +230,7 @@ _server_proc_connection_listener :: proc() {
         }
         
         fmt.println("accept_tcp successful")
+        
         _server_handle_client_connection(client_socket)
     }
 }
