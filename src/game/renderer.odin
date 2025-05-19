@@ -11,7 +11,7 @@ FAR_PLANE :: 1000
 DEPTH_STENCIL_FORMAT :: sdl.GPUTextureFormat.D32_FLOAT_S8_UINT
 
 
-RenderState :: struct {
+render_state: struct {
 	gpu:               ^sdl.GPUDevice,
 	swapchain_texture: ^sdl.GPUTexture,
 	depth_texture:     ^sdl.GPUTexture,

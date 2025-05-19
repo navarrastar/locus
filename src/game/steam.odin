@@ -40,7 +40,6 @@ steam_init :: proc () {
     log.info("Steam User State:", steam.Friends_GetPersonaState(steam.Friends()))
     
     steam_user.user = steam.User()
-    
 }
 
 steam_cleanup :: proc() {

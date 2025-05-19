@@ -28,9 +28,10 @@ mouse_pos: m.Vec2
 swapchain_texture_format: sdl.GPUTextureFormat
 dt: f32
 
-world: ^World
-render_state: ^RenderState
-ui_state: ^UIState
+world: struct {
+	entities:     [1024]Entity,
+	entity_count: eID,
+}
 
 materials: [MaterialType]Material
 shader_name_to_material_type := map[string]MaterialType {
@@ -43,3 +44,5 @@ shader_name_to_material_type := map[string]MaterialType {
 phys_visualize: bool
 
 loaded_models: map[string]^gltf.Data
+
+bConnecting_to_server: bool

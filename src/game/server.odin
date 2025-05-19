@@ -28,6 +28,15 @@ Connection :: struct {
 	bAuthenticated: bool,
 }
 
+ConnectionCallback :: proc(args: ^ConnectionArgs)
+
+ConnectionArgs :: struct {
+    user: ^steam.IUser,
+    err:  ServerError,
+    mutex: sync.Mutex,
+    callback: ConnectionCallback
+}
+
 Network_AttemptConnection :: struct {
     ticket:  [AUTH_TICKET_SIZE]byte,
     steamID: [STEAM_ID_SIZE]byte
@@ -37,12 +46,19 @@ ServerError :: enum {
     None,
     Timeout,
     AlreadyFull,
+    Dial,
+    Send,
+    EndpointParse,
     Unknown
 }
 
 @(init)
 _init_server_ip :: proc() {
 	SERVER_IP, _ = _ip6_string_to_bytes(SERVER_IP_STR)
+}
+
+client_state: struct {
+    args: ^ConnectionArgs,
 }
 
 server_state: struct {
@@ -96,8 +112,8 @@ server_init :: proc(port: u16) {
 	
     listen_err: net.Network_Error
     server_state.listen_socket, listen_err = net.listen_tcp(server_endpoint)
-    
     log.assertf(listen_err == nil, "Failed to start TCP listener: %v", listen_err)
+    
     log.info("listen_tcp successful")
     
     server_state.listen_thread = thread.create_and_start(_server_proc_connection_listener)
@@ -113,53 +129,77 @@ server_cleanup :: proc() {
 	steam.SteamGameServer_Shutdown()
 }
 
-user_connect_to_server :: proc(user: ^steam.IUser) -> bool {
-	networking_identity: steam.SteamNetworkingIdentity
+user_connect_to_server_async :: proc(user: ^steam.IUser) {
+    client_state.args = &ConnectionArgs {
+            user = user,
+            err = .None,
+            callback = user_connection_finished
+        }
+    thread.create_and_start_with_data(client_state.args, _user_proc_connect_to_server)
+}
+
+user_connection_finished :: proc(args: ^ConnectionArgs) {
+    if args.err == .None do return
+    
+}
+
+_user_proc_connect_to_server :: proc(args_ptr: rawptr) {
+    args := cast(^ConnectionArgs)args_ptr
+    
+    networking_identity: steam.SteamNetworkingIdentity
 	networking_identity.eType = .IPAddress
 	mem.copy(&networking_identity.szUnknownRawString, &SERVER_IP, size_of(SERVER_IP))
-	ticket: rawptr
+	ticket: [AUTH_TICKET_SIZE]byte
 	ticket_length: u32
 	ticket_handle := steam.User_GetAuthSessionTicket(
-		user,
-		ticket,
+		args.user,
+		&ticket[0],
 		1024,
 		&ticket_length,
 		networking_identity,
 	)
-
+   
 	server_endpoint_str := fmt.tprintf("[%s]:%d", SERVER_IP_STR, SERVER_PORT)
-
-	log.infof("Networking: Attempting to connect to server at %s", server_endpoint_str)
+   
+	log.infof("Attempting to connect to server at %s", server_endpoint_str)
 	endpoint, ok := net.parse_endpoint(server_endpoint_str)
 	if ok != true {
+	    steam.User_CancelAuthTicket(args.user, ticket_handle)
+		
 		log.errorf("Networking: Error parsing server endpoint '%s': %v", server_endpoint_str)
-		steam.User_CancelAuthTicket(user, ticket_handle)
-		return false
+		args.err = .EndpointParse
+		return
 	}
-
+   
 	network_data: Network_AttemptConnection
-	ticket_slice := slice.bytes_from_ptr(ticket, int(ticket_length))
-	copy(network_data.ticket[:], ticket_slice)
-	steamID := steam.User_GetSteamID(user)
+	network_data.ticket = ticket
+	steamID := steam.User_GetSteamID(args.user)
 	mem.copy(&network_data.steamID, &steamID, STEAM_ID_SIZE)
 	network_data_bytes := mem.slice_ptr(&network_data, size_of(Network_AttemptConnection))
 	
 	socket, dial_err := net.dial_tcp(endpoint)
 	defer net.close(socket)
 	if dial_err != nil {
-	    log.errorf("Error dialing endpoint\n    Endpoint: %v\n    Error: %v\n", endpoint, dial_err)
-		return false
+	    steam.User_CancelAuthTicket(args.user, ticket_handle)
+		
+	    log.errorf("Error dialing endpoint\n    Endpoint: %d\n    Error: %v\n", endpoint, dial_err)
+		args.err = .Dial
+		return
 	}
 	
 	bytes_written_count, send_err := net.send_tcp(socket, transmute([]byte)network_data_bytes)
 	if send_err != nil {
+        steam.User_CancelAuthTicket(args.user, ticket_handle)
+        
 		log.errorf("Error sending ticket to socket\n    Ticket: %v\n    Socket: %v\n    Error: %v", ticket, socket, send_err)
-		return false
+		args.err = .Send
+		return
 	}
-
-	return true
+   
+	args.err = .None
+	args->callback()
+	return
 }
-
 
 server_is_ready :: proc() -> bool {
 	return true
@@ -201,7 +241,9 @@ _server_handle_client_connection :: proc(socket: net.TCP_Socket) -> ServerError 
     log.infof("Client joined spot", open_spot)
     
     attempt_connection_buf: []byte
-    net.recv_tcp(socket, attempt_connection_buf)
+    bytes_read_count, recv_err := net.recv_tcp(socket, attempt_connection_buf)
+    log.assertf(recv_err == nil, "")
+    log.info("recv_tcp successful")
     
     return .None
 }

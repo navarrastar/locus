@@ -2,6 +2,7 @@ package game
 
 // import "core:log"
 import "core:time"
+import "core:sync"
 
 import m "../math"
 import t "../types"
@@ -9,10 +10,6 @@ import t "../types"
 
 init :: proc() {
 	start_time = time.now()
-
-	world = new(World)
-	render_state = new(RenderState)
-	ui_state = new(UIState)
 
 	window_init()
 	renderer_init()
@@ -24,12 +21,6 @@ init :: proc() {
 	game_default_level()
 	
 	steam_init()
-	if server_is_ready() {
-	    if !user_connect_to_server(steam_user.user) {
-			panic("User failed to connect to server")
-		}
-	}
-	
 }
 
 update :: proc() {
@@ -68,10 +59,6 @@ update :: proc() {
 }
 
 cleanup :: proc() {
-	free(ui_state)
-	free(render_state)
-	free(world)
-	
 	steam_cleanup()
 }
 
@@ -97,7 +84,6 @@ game_default_level :: proc() {
 		phys = {layer = {.Layer0}, mask = {.Mask0}},
 	}
 	world_spawn(&michelle)
-
 
 	grid := Entity_Mesh {
 		transform = m.DEFAULT_TRANSFORM,

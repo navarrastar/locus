@@ -50,6 +50,7 @@ window_poll_events :: proc() {
                 if event.key.scancode == .GRAVE     do ui_toggle_visibility({ .None })
                 if event.key.scancode == .D         do ui_toggle_visibility({ .Demo })
                 if event.key.scancode == .G         do ui_toggle_visibility({ .General })
+                if event.key.scancode == .S         do ui_toggle_visibility({ .Server })
                 if event.key.scancode == .BACKSLASH do shader_toggle_should_check_for_changes()
             case .KEY_UP:
                 input_handle_up_event(event.key.scancode)

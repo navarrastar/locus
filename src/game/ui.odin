@@ -2,6 +2,7 @@ package game
 
 import "core:fmt"
 import "core:strings"
+import "core:log"
 
 import sdl "vendor:sdl3"
 
@@ -14,13 +15,14 @@ import im_sdlgpu "../../third_party/imgui/imgui_impl_sdlgpu3"
 UIPanel :: enum {
     None,
     Demo,
-    General
+    General,
+    Server
 }
 
 UIPanelSet :: bit_set[UIPanel]
 
 
-UIState :: struct {
+ui_state: struct {
     visible_panels: UIPanelSet
 }
 
@@ -59,6 +61,10 @@ ui_update :: proc() -> ^im.DrawData {
     
     if .General in ui_state.visible_panels {
         ui_show_general_panel()
+    }
+    
+    if .Server in ui_state.visible_panels {
+        ui_show_server_panel()
     }
     
     im.Render()
@@ -117,5 +123,15 @@ ui_show_general_panel :: proc() {
         }
     }
     
+    im.End()
+}
+
+ui_show_server_panel :: proc() {
+    if im.Begin("Server") {
+        if im.Button("Connect to server") {
+            log.info(steam_user.user)
+            user_connect_to_server_async(steam_user.user)
+        }
+    }
     im.End()
 }

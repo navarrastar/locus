@@ -1,1 +1,1 @@
-odin run /src -define:SERVER=true
+odin run src/ -define:SERVER=true
