@@ -129,7 +129,6 @@ ui_show_general_panel :: proc() {
 ui_show_server_panel :: proc() {
     if im.Begin("Server") {
         if im.Button("Connect to server") {
-            log.info(steam_user.user)
             user_connect_to_server_async(steam_user.user)
         }
     }

@@ -10,6 +10,7 @@ import "core:strings"
 import "core:sync"
 import "core:thread"
 import "core:slice"
+import "base:runtime"
 
 import steam "../../third_party/steamworks"
 
@@ -55,10 +56,6 @@ ServerError :: enum {
 @(init)
 _init_server_ip :: proc() {
 	SERVER_IP, _ = _ip6_string_to_bytes(SERVER_IP_STR)
-}
-
-client_state: struct {
-    args: ^ConnectionArgs,
 }
 
 server_state: struct {
@@ -130,21 +127,24 @@ server_cleanup :: proc() {
 }
 
 user_connect_to_server_async :: proc(user: ^steam.IUser) {
-    client_state.args = &ConnectionArgs {
-            user = user,
-            err = .None,
-            callback = user_connection_finished
-        }
-    thread.create_and_start_with_data(client_state.args, _user_proc_connect_to_server)
+    args := new(ConnectionArgs)
+    args^ = ConnectionArgs {
+        user = user,
+        err = .None,
+        callback = user_connection_finished
+    }
+    
+    thread.create_and_start_with_data(args, _user_proc_connect_to_server)
 }
 
 user_connection_finished :: proc(args: ^ConnectionArgs) {
-    if args.err == .None do return
-    
+    log.assertf(args.err == .None, "")
+    log.infof("user %v connected to server", args.user)
 }
 
-_user_proc_connect_to_server :: proc(args_ptr: rawptr) {
+_user_proc_connect_to_server :: proc(args_ptr: rawptr) {	
     args := cast(^ConnectionArgs)args_ptr
+    defer(args->callback())
     
     networking_identity: steam.SteamNetworkingIdentity
 	networking_identity.eType = .IPAddress
@@ -161,12 +161,12 @@ _user_proc_connect_to_server :: proc(args_ptr: rawptr) {
    
 	server_endpoint_str := fmt.tprintf("[%s]:%d", SERVER_IP_STR, SERVER_PORT)
    
-	log.infof("Attempting to connect to server at %s", server_endpoint_str)
+	fmt.printf("Attempting to connect to server at %s", server_endpoint_str)
 	endpoint, ok := net.parse_endpoint(server_endpoint_str)
 	if ok != true {
 	    steam.User_CancelAuthTicket(args.user, ticket_handle)
 		
-		log.errorf("Networking: Error parsing server endpoint '%s': %v", server_endpoint_str)
+		fmt.printf("Networking: Error parsing server endpoint '%s': %v", server_endpoint_str)
 		args.err = .EndpointParse
 		return
 	}
@@ -182,7 +182,7 @@ _user_proc_connect_to_server :: proc(args_ptr: rawptr) {
 	if dial_err != nil {
 	    steam.User_CancelAuthTicket(args.user, ticket_handle)
 		
-	    log.errorf("Error dialing endpoint\n    Endpoint: %d\n    Error: %v\n", endpoint, dial_err)
+	    fmt.printf("Error dialing endpoint\n    Endpoint: %d\n    Error: %v\n", endpoint, dial_err)
 		args.err = .Dial
 		return
 	}
@@ -191,13 +191,12 @@ _user_proc_connect_to_server :: proc(args_ptr: rawptr) {
 	if send_err != nil {
         steam.User_CancelAuthTicket(args.user, ticket_handle)
         
-		log.errorf("Error sending ticket to socket\n    Ticket: %v\n    Socket: %v\n    Error: %v", ticket, socket, send_err)
+		fmt.printf("Error sending ticket to socket\n    Ticket: %v\n    Socket: %v\n    Error: %v", ticket, socket, send_err)
 		args.err = .Send
 		return
 	}
    
 	args.err = .None
-	args->callback()
 	return
 }
 
@@ -206,12 +205,12 @@ server_is_ready :: proc() -> bool {
 }
 
 _server_proc_connection_listener :: proc() {
-    log.info("Started connection listener thread")
+    fmt.printf("Started connection listener thread")
     
     for server_state.bRunning {
         client_socket, endpoint, accept_err := net.accept_tcp(server_state.listen_socket)
         if accept_err != nil {
-            log.errorf("Error accepting connection: %v", accept_err)
+            fmt.printf("Error accepting connection: %v", accept_err)
             continue
         }
         
@@ -220,7 +219,7 @@ _server_proc_connection_listener :: proc() {
 }
 
 _server_handle_client_connection :: proc(socket: net.TCP_Socket) -> ServerError {
-    log.info("Connecting a client...")
+    fmt.printf("Connecting a client...")
     
     sync.mutex_lock(&server_state.connection_mutex)
     defer(sync.mutex_unlock(&server_state.connection_mutex))
@@ -233,17 +232,16 @@ _server_handle_client_connection :: proc(socket: net.TCP_Socket) -> ServerError 
         }
     }
     if open_spot == -1 { 
-        log.error("Tried to connect a client when the server is full")
+        fmt.printf("Tried to connect a client when the server is full")
         return .AlreadyFull
     }
     
     server_state.connections[open_spot].socket = socket
-    log.infof("Client joined spot", open_spot)
+    fmt.printf("Client joined spot", open_spot)
     
     attempt_connection_buf: []byte
     bytes_read_count, recv_err := net.recv_tcp(socket, attempt_connection_buf)
     log.assertf(recv_err == nil, "")
-    log.info("recv_tcp successful")
     
     return .None
 }
