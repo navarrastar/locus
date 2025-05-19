@@ -228,6 +228,7 @@ _server_proc_connection_listener :: proc() {
             continue
         }
         
+        fmt.println("accept_tcp successful")
         _server_handle_client_connection(client_socket)
     }
 }
