@@ -289,8 +289,8 @@ _server_handle_client_connection :: proc(socket: net.TCP_Socket) -> (id: steam.C
         attempt_connection.steamID,
     )
     assert(auth_result == .OK)
-
-	
+    fmt.printfln("steamID %v has authenticated with the game server", attempt_connection.steamID)
+    
 	return attempt_connection.steamID, .None
 }
 
