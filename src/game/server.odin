@@ -288,6 +288,8 @@ _server_handle_client_connection :: proc(socket: net.TCP_Socket) -> (id: steam.C
         i32(AUTH_TICKET_SIZE),
         attempt_connection.steamID,
     )
+    assert(auth_result == .OK)
+
 	
 	return attempt_connection.steamID, .None
 }
