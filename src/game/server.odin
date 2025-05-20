@@ -259,7 +259,7 @@ _server_proc_connection_listener :: proc() {
 			continue
 		} 
 		
-		if steamID, server_err := _server_handle_client_connection(client_socket); server_err != .None {
+		if steamID, server_err := _server_handle_client_connection(client_socket); server_err == .None {
             fmt.printfln("SteamID %v joined spot %v", steamID,  player_spot)
             
             conn := Connection {
