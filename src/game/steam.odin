@@ -59,7 +59,7 @@ _steam_debug_text_hook :: proc "c" (severity: c.int, debugText: cstring) {
     }
 }
 
-run_steam_callbacks :: proc() {
+steam_run_callbacks :: proc() {
     temp_mem := make([dynamic]byte, context.temp_allocator)
 
     steam_pipe := steam.GetHSteamPipe()

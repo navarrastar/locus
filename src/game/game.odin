@@ -25,7 +25,7 @@ init :: proc() {
 
 update :: proc() {
 	window_poll_events()
-	run_steam_callbacks()
+	steam_run_callbacks()
 
 	@(static) time_last_checked: time.Time
 	time_now := time.now()

@@ -1,8 +1,8 @@
 package game
 
-import "core:log"
-
 import "base:runtime"
+
+import "core:log"
 import "core:fmt"
 import "core:mem"
 import "core:net"
@@ -86,6 +86,8 @@ server_init :: proc(port: u16) {
 		"0.0.1",
 		&server_state.err_msg,
 	)
+	
+	steam.ManualDispatch_Init()
 
 	log.assertf(res == .OK, "SteamGameServer_InitEx: ", res)
 	log.info("SteamGameServer_InitEx successful")
@@ -121,7 +123,7 @@ server_init :: proc(port: u16) {
 }
 
 server_update :: proc() {
-
+    server_run_callbacks()
 }
 
 server_cleanup :: proc() {
@@ -131,6 +133,43 @@ server_cleanup :: proc() {
     }
 
 	steam.SteamGameServer_Shutdown()
+}
+
+server_run_callbacks :: proc() {
+    temp_mem := make([dynamic]byte, context.temp_allocator)
+
+    steam_pipe := steam.GetHSteamPipe()
+    steam.ManualDispatch_RunFrame(steam_pipe)
+    callback: steam.CallbackMsg
+
+    for steam.ManualDispatch_GetNextCallback(steam_pipe, &callback) {
+        // Check for dispatching API call results
+        #partial switch callback.iCallback {
+        case .SteamAPICallCompleted:
+            fmt.println("CallResult: ", callback)
+
+            call_completed := transmute(^steam.SteamAPICallCompleted)callback.pubParam
+            resize(&temp_mem, int(callback.cubParam))
+            temp_call_res, ok := mem.alloc(int(callback.cubParam), allocator = context.temp_allocator)
+            
+            if !steam.ManualDispatch_GetAPICallResult(steam_pipe, call_completed.hAsyncCall, temp_call_res, callback.cubParam, callback.iCallback, &{}) {
+                log.errorf("Failed to get steam api call result for callback: %s", callback.iCallback)
+                return
+            }
+            
+            // call identified by call_completed->m_hAsyncCall
+            _server_handle_api_call_result(call_completed, temp_call_res)
+            
+        case .ValidateAuthTicketResponse:
+            _server_callback_ValidateAuthTicketResponse(cast(^steam.ValidateAuthTicketResponse)callback.pubParam)
+        }
+        
+        steam.ManualDispatch_FreeLastCallback(steam_pipe)
+    }
+}
+
+_server_callback_ValidateAuthTicketResponse :: proc(data: ^steam.ValidateAuthTicketResponse) {
+    fmt.printfln("ValidateAuthTicketResponse callback called with data: %v", data)
 }
 
 user_connect_to_server_async :: proc(user: ^steam.IUser) {
@@ -287,12 +326,6 @@ _server_handle_client_connection :: proc(socket: net.TCP_Socket) -> (id: steam.C
 
 user_leave_server :: proc(user: ^steam.IUser) {
     steam.User_CancelAuthTicket(user, client_ticket)
-    steamID := steam.User_GetSteamID(user)
-    for conn in server_state.connections {
-        if conn.steamID == steamID {
-            steam.User_EndAuthSession(user, steamID)
-        }
-    }
 }
 
 _server_get_open_spot :: proc() -> int {
@@ -301,6 +334,10 @@ _server_get_open_spot :: proc() -> int {
 		if conn.idx == -1 do open_spot = i
 	}
 	return open_spot
+}
+
+_server_handle_api_call_result :: proc(call: ^steam.SteamAPICallCompleted, res: rawptr) {
+    fmt.printfln("handle_api_call_result: %v", call)
 }
 
 @(require_results)
