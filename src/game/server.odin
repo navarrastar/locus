@@ -24,21 +24,10 @@ SERVER_PORT :: 27015
 QUERY_PORT :: 27030
 
 MAX_PLAYERS :: 8
-PlayerSpot :: enum {
-	None,
-	Player1,
-	Player2,
-	Player3,
-	Player4,
-	PLayer5,
-	Player6,
-	Player7,
-	Player8,
-}
 
 Connection :: struct {
-	spot:    PlayerSpot,
-	steamID: steam.CSteamID,
+	idx:     int,
+	steamID: steam.CSteamID
 }
 
 ConnectionCallback :: proc(args: ^ConnectionArgs)
@@ -80,6 +69,10 @@ server_state: struct {
 
 server_init :: proc(port: u16) {
 	log.info("Initializing Server")
+	
+	for &conn in server_state.connections {
+	    conn.idx = -1
+	}
 
 	networking_ip := &steam.SteamNetworkingIPAddr{ipv6 = SERVER_IP, port = port}
 
@@ -133,6 +126,9 @@ server_update :: proc() {
 
 server_cleanup :: proc() {
 
+    for conn in server_state.connections {
+        if conn.idx == -1 do steam.GameServer_EndAuthSession(server_state.game_server, conn.steamID)
+    }
 
 	steam.SteamGameServer_Shutdown()
 }
@@ -150,6 +146,7 @@ user_connect_to_server_async :: proc(user: ^steam.IUser) {
 
 _user_proc_connect_to_server :: proc(args_ptr: rawptr) {
 	args := cast(^ConnectionArgs)args_ptr
+	defer free(args)
 	defer (args->callback())
 
 	networking_identity: steam.SteamNetworkingIdentity
@@ -212,15 +209,9 @@ _user_proc_connect_to_server :: proc(args_ptr: rawptr) {
 }
 
 user_connection_finished :: proc(args: ^ConnectionArgs) {
-	defer free(args)
-
 	switch args.err {
 	case .None:
 		fmt.println("User successfully sent join request to server")
-		connection := Connection {
-			steamID = steam.User_GetSteamID(args.user),
-		}
-		server_state.connections[0] = connection
 	case .Dial:
 		fmt.println("Error dialing server, make sure it is running")
 	case .AlreadyFull:
@@ -254,7 +245,7 @@ _server_proc_connection_listener :: proc() {
 		fmt.println("accept_tcp successful")
 
 		player_spot := _server_get_open_spot()
-		if player_spot == .None {
+		if player_spot == -1 {
 		    fmt.println("Tried to add a player but server is full")
 			continue
 		} 
@@ -263,7 +254,7 @@ _server_proc_connection_listener :: proc() {
             fmt.printfln("SteamID %v joined spot %v", steamID,  player_spot)
             
             conn := Connection {
-                spot = player_spot,
+                idx = player_spot,
                 steamID = steamID
             }
             server_state.connections[player_spot] = conn
@@ -304,10 +295,10 @@ user_leave_server :: proc(user: ^steam.IUser) {
     }
 }
 
-_server_get_open_spot :: proc() -> PlayerSpot {
-	open_spot: PlayerSpot
+_server_get_open_spot :: proc() -> int {
+	open_spot := -1
 	for conn, i in server_state.connections {
-		if conn.spot == .None do open_spot = PlayerSpot(i)
+		if conn.idx == -1 do open_spot = i
 	}
 	return open_spot
 }

@@ -19,6 +19,6 @@
 - [ ] Smooth Movement
 
 ### **Fix** ###
-- [ ] Fix the projectile.pos.y hack
+- [ ] Fix the projectile.pos.y hack (use initializer loop)
 - [x] Pipeline not bound when running debugger
 - [ ] Seperate Colliders from Geometry
