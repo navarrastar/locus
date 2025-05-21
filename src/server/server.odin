@@ -67,7 +67,7 @@ server_state: struct {
 	err_msg:       steam.SteamErrMsg,
 }
 
-server_init :: proc(port: u16) {
+init :: proc(port: u16) {
 	log.info("Initializing Server")
 	
 	for &conn in server_state.connections {
@@ -122,11 +122,11 @@ server_init :: proc(port: u16) {
 	server_state.listen_thread = thread.create_and_start(_server_proc_connection_listener)
 }
 
-server_update :: proc() {
+update :: proc() {
     _server_run_callbacks()
 }
 
-server_cleanup :: proc() {
+cleanup :: proc() {
     for conn in server_state.connections {
         if conn.idx != -1 do steam.GameServer_EndAuthSession(server_state.game_server, conn.steamID)
     }

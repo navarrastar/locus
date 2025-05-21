@@ -3,6 +3,7 @@ package main
 import "core:log"
 
 import "game"
+import "server"
 
 SERVER :: #config(SERVER, false)
 
@@ -16,8 +17,8 @@ main :: proc() {
        	game.init()
        	defer game.cleanup()
     } else {
-        game.server_init(game.SERVER_PORT)
-        defer game.server_cleanup()
+        server.init(server.SERVER_PORT)
+        defer server.cleanup()
     }
     
 	for !game.should_shutdown() {
@@ -26,7 +27,7 @@ main :: proc() {
 		when !SERVER {
 	        game.update()
 		} else {
-		    game.server_update()
+		    server.update()
 		}
 	}
 
