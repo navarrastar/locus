@@ -87,7 +87,6 @@ server_init :: proc(port: u16) {
 		&server_state.err_msg,
 	)
 	
-	steam.ManualDispatch_Init()
 
 	log.assertf(res == .OK, "SteamGameServer_InitEx: ", res)
 	log.info("SteamGameServer_InitEx successful")
