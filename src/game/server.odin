@@ -87,6 +87,7 @@ server_init :: proc(port: u16) {
 		&server_state.err_msg,
 	)
 	
+	steam.ManualDispatch_Init()
 
 	log.assertf(res == .OK, "SteamGameServer_InitEx: ", res)
 	log.info("SteamGameServer_InitEx successful")
@@ -135,7 +136,6 @@ server_cleanup :: proc() {
 }
 
 server_run_callbacks :: proc() {
-    steam.SteamGameServer_RunCallbacks()
     temp_mem := make([dynamic]byte, context.temp_allocator)
 
     steam_pipe := steam.GetHSteamPipe()
