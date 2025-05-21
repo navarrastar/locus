@@ -138,10 +138,8 @@ server_cleanup :: proc() {
 server_run_callbacks :: proc() {
     temp_mem := make([dynamic]byte, context.temp_allocator)
 
-    steam_pipe := steam.GetHSteamPipe()
-    fmt.println("GetHSteamPipe")
+    steam_pipe := steam.SteamGameServer_GetHSteamPipe()
     steam.ManualDispatch_RunFrame(steam_pipe)
-    fmt.println("RunFrame")
     callback: steam.CallbackMsg
 
     for steam.ManualDispatch_GetNextCallback(steam_pipe, &callback) {

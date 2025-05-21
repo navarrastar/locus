@@ -3937,7 +3937,7 @@ foreign lib {
     // Shutdown SteamGameSeverXxx interfaces, log out, and free resources.
     SteamGameServer_Shutdown :: proc() ---
 
-    SteamGameServer_RunCallbacks :: proc() ---
+    SteamGameServer_GetHSteamPipe :: proc() -> HSteamPipe ---
     
     SteamGameServer_BSecure :: proc() -> bool ---
     SteamGameServer_GetSteamID :: proc() -> u64 ---
