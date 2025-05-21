@@ -45,7 +45,7 @@ steam_init :: proc () {
 steam_cleanup :: proc() {
     log.info("Shutting down Steamworks.")
     
-    user_leave_server(steam_user.user)
+    steam.User_CancelAuthTicket(steam_user.user, client_ticket)
     steam.Shutdown()
 }
 

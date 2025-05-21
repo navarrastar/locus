@@ -77,6 +77,8 @@ server_init :: proc(port: u16) {
 	networking_ip := &steam.SteamNetworkingIPAddr{ipv6 = SERVER_IP, port = port}
 
 	log.info("Starting SteamGameServer")
+	
+	steam_init()
 
 	res := steam.SteamGameServer_InitEx(
 		0,
@@ -325,10 +327,6 @@ _server_handle_client_connection :: proc(socket: net.TCP_Socket) -> (id: steam.C
     fmt.printfln("steamID %v has authenticated with the game server", attempt_connection.steamID)
     
 	return attempt_connection.steamID, .None
-}
-
-user_leave_server :: proc(user: ^steam.IUser) {
-    steam.User_CancelAuthTicket(user, client_ticket)
 }
 
 _server_get_open_spot :: proc() -> int {
