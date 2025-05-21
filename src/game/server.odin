@@ -183,6 +183,8 @@ _server_remove_client :: proc(steamID: steam.CSteamID) {
     steam.GameServer_EndAuthSession(server_state.game_server, steamID)
     for &conn in server_state.connections {
         if conn.steamID == steamID do conn = Connection{ idx = -1 }
+        fmt.println("Removed %v from game server", steamID)
+        break
     }
 }
 
