@@ -250,12 +250,10 @@ _server_handle_client_connection :: proc(socket: net.TCP_Socket) -> (id: steam.C
 }
 
 _server_get_open_spot :: proc() -> int {
-	open_spot := -1
-	for conn, i in server_state.connections {
-		if conn.idx == -1 do open_spot = i
-		break
-	}
-	return open_spot
+    for conn, i in server_state.connections {
+        if conn.idx == -1 do return i
+    }
+    return -1
 }
 
 _server_handle_api_call_result :: proc(call: ^steam.SteamAPICallCompleted, res: rawptr) {
