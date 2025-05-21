@@ -173,6 +173,14 @@ server_run_callbacks :: proc() {
 
 _server_callback_ValidateAuthTicketResponse :: proc(data: ^steam.ValidateAuthTicketResponse) {
     fmt.printfln("ValidateAuthTicketResponse callback called with data: %v", data)
+    #partial switch data.eAuthSessionResponse {
+    case .AuthTicketCanceled:
+        _server_remove_client(data.SteamID)
+    }
+}
+
+_server_remove_client :: proc(steamID: steam.CSteamID) {
+    steam.GameServer_EndAuthSession(server_state.game_server, steamID)
 }
 
 user_connect_to_server_async :: proc(user: ^steam.IUser) {
