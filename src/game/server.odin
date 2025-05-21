@@ -88,6 +88,8 @@ server_init :: proc(port: u16) {
 	)
 	
 	steam.ManualDispatch_Init()
+	steam.GameServer_SetDedicatedServer(server_state.game_server, true)
+	steam.GameServer_LogOnAnonymous(server_state.game_server)
 
 	log.assertf(res == .OK, "SteamGameServer_InitEx: ", res)
 	log.info("SteamGameServer_InitEx successful")
