@@ -44,6 +44,8 @@ steam_init :: proc () {
 
 steam_cleanup :: proc() {
     log.info("Shutting down Steamworks.")
+    
+    user_leave_server(steam_user.user)
     steam.Shutdown()
 }
 
@@ -87,6 +89,9 @@ steam_run_callbacks :: proc() {
         case .GameOverlayActivated:
             fmt.println("GameOverlayActivated")
             _onGameOverlayActivated(transmute(^steam.GameOverlayActivated)callback.pubParam)
+        
+        case:
+            fmt.println("Unhandled Callback:", callback.iCallback)
         }
 
         steam.ManualDispatch_FreeLastCallback(steam_pipe)

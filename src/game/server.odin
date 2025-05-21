@@ -162,6 +162,9 @@ server_run_callbacks :: proc() {
             
         case .ValidateAuthTicketResponse:
             _server_callback_ValidateAuthTicketResponse(cast(^steam.ValidateAuthTicketResponse)callback.pubParam)
+            
+        case:
+            fmt.println("Unhandled Callback:", callback.iCallback)
         }
         
         steam.ManualDispatch_FreeLastCallback(steam_pipe)
