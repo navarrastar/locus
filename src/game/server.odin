@@ -181,6 +181,9 @@ _server_callback_ValidateAuthTicketResponse :: proc(data: ^steam.ValidateAuthTic
 
 _server_remove_client :: proc(steamID: steam.CSteamID) {
     steam.GameServer_EndAuthSession(server_state.game_server, steamID)
+    for &conn in server_state.connections {
+        if conn.steamID == steamID do conn = Connection{ idx = -1 }
+    }
 }
 
 user_connect_to_server_async :: proc(user: ^steam.IUser) {
@@ -339,6 +342,7 @@ _server_get_open_spot :: proc() -> int {
 	open_spot := -1
 	for conn, i in server_state.connections {
 		if conn.idx == -1 do open_spot = i
+		break
 	}
 	return open_spot
 }
