@@ -9,14 +9,18 @@ import steam "../../third_party/steamworks"
 
 import "../server"
 
+
+
 client_ticket: steam.HAuthTicket
 
-user_connect_to_server_async :: proc(user: ^steam.IUser) {
+user_connect_to_server_async :: proc(user: ^steam.IUser, ip_str: string, port: int) {
 	args := new(server.ConnectionArgs)
 	args^ = server.ConnectionArgs {
 		user     = user,
 		err      = .None,
 		callback = user_connection_finished,
+		ip_str   = ip_str,
+		port     = port
 	}
 
 	thread.create_and_start_with_data(args, _user_proc_connect_to_server)
@@ -29,7 +33,8 @@ _user_proc_connect_to_server :: proc(args_ptr: rawptr) {
 
 	networking_identity: steam.SteamNetworkingIdentity
 	networking_identity.eType = .IPAddress
-	mem.copy(&networking_identity.szUnknownRawString, &server.SERVER_IP, size_of(server.SERVER_IP))
+	ip_bytes, _ := server._ip6_string_to_bytes(args.ip_str)
+	mem.copy(&networking_identity.szUnknownRawString, &ip_bytes, size_of(ip_bytes))
 	ticket: [server.AUTH_TICKET_SIZE]byte
 	ticket_length: u32
 	client_ticket = steam.User_GetAuthSessionTicket(
@@ -40,7 +45,7 @@ _user_proc_connect_to_server :: proc(args_ptr: rawptr) {
 		networking_identity,
 	)
 
-	server_endpoint_str := fmt.tprintf("[%s]:%d", server.SERVER_IP_STR, server.SERVER_PORT)
+	server_endpoint_str := fmt.tprintf("[%s]:%d", args.ip_str, args.port)
 
 	fmt.printfln("Attempting to connect to server at %s", server_endpoint_str)
 	endpoint, ok := net.parse_endpoint(server_endpoint_str)
