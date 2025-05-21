@@ -82,7 +82,7 @@ server_init :: proc(port: u16) {
 		0,
 		SERVER_PORT,
 		QUERY_PORT,
-		.NoAuthentication,
+		.Authentication,
 		"0.0.1",
 		&server_state.err_msg,
 	)
