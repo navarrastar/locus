@@ -136,6 +136,7 @@ server_cleanup :: proc() {
 }
 
 server_run_callbacks :: proc() {
+    fmt.println("Running Callbacks")
     temp_mem := make([dynamic]byte, context.temp_allocator)
 
     steam_pipe := steam.GetHSteamPipe()
@@ -143,7 +144,7 @@ server_run_callbacks :: proc() {
     callback: steam.CallbackMsg
 
     for steam.ManualDispatch_GetNextCallback(steam_pipe, &callback) {
-        // Check for dispatching API call results
+        fmt.println("Got a callback")
         #partial switch callback.iCallback {
         case .SteamAPICallCompleted:
             fmt.println("CallResult: ", callback)
