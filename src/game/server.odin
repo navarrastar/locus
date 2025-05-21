@@ -77,8 +77,6 @@ server_init :: proc(port: u16) {
 	networking_ip := &steam.SteamNetworkingIPAddr{ipv6 = SERVER_IP, port = port}
 
 	log.info("Starting SteamGameServer")
-	
-	steam_init()
 
 	res := steam.SteamGameServer_InitEx(
 		0,
