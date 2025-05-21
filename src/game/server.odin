@@ -136,7 +136,6 @@ server_cleanup :: proc() {
 }
 
 server_run_callbacks :: proc() {
-    fmt.println("Running Callbacks")
     temp_mem := make([dynamic]byte, context.temp_allocator)
 
     steam_pipe := steam.GetHSteamPipe()
