@@ -129,7 +129,7 @@ ui_show_general_panel :: proc() {
 ui_show_server_panel :: proc() {
     if im.Begin("Server") {
         if im.Button("Connect to server") {
-            user_connect_to_server_async(steam_user.user, "::1", 27015)
+            user_connect_to_server_async(steam_user.user, "2600:3c00::f03c:95ff:fe44:bdfc", 27015)
         }
     }
     im.End()
