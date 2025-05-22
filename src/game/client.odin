@@ -105,6 +105,8 @@ user_connection_finished :: proc(args: ^server.ConnectionArgs) {
 		fmt.println("Error parsing the server endpoint")
 	case .Send:
 		fmt.println("Error sending ticket to socket")
+	case .DuplicateRequest:
+	    fmt.println("DuplicateRequest error")
 	case .Unknown:
 		fmt.println("Unknown error while connecting user")
 	}

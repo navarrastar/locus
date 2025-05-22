@@ -44,6 +44,7 @@ Network_AttemptConnection :: struct {
 
 ServerError :: enum {
 	None,
+	DuplicateRequest,
 	Timeout,
 	AlreadyFull,
 	Dial,
@@ -283,10 +284,24 @@ _server_handle_client_connection :: proc(
 		i32(AUTH_TICKET_SIZE),
 		attempt_connection.steamID,
 	)
-	assert(auth_result == .OK)
+	auth_err := _server_handle_auth_result(auth_result)
+	if auth_err != .None do return
 	fmt.printfln("steamID %v has authenticated with the game server", attempt_connection.steamID)
 
 	return attempt_connection.steamID, .None
+}
+
+_server_handle_auth_result :: proc(res: steam.EBeginAuthSessionResult) -> ServerError {
+    #partial switch res {
+    case .DuplicateRequest:
+        fmt.println("Tried to begin an auth session with a user who is already authenticated")
+    case .OK:
+        return .None
+    case:
+        fmt.println("Unhandled auth_result: %v", res)
+    }
+    
+    return .None
 }
 
 _server_get_open_spot :: proc() -> int {
