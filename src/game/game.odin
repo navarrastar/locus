@@ -13,7 +13,6 @@ init :: proc() {
 
 	window_init()
 	renderer_init()
-	ui_init()
 
 	root_entity: EntityBase
 	world_spawn(&root_entity)
@@ -21,6 +20,8 @@ init :: proc() {
 	game_default_level()
 	
 	steam_init()
+	client_init()
+	ui_init()
 }
 
 update :: proc() {

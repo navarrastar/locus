@@ -6,11 +6,12 @@ import "core:log"
 
 import sdl "vendor:sdl3"
 
+import steam "../../third_party/steamworks"
 import im "../../third_party/imgui"
 import im_sdl "../../third_party/imgui/imgui_impl_sdl3"
 import im_sdlgpu "../../third_party/imgui/imgui_impl_sdlgpu3"
 
-
+MAX_SERVER_COUNT :: 64
 
 UIPanel :: enum {
     None,
@@ -21,9 +22,8 @@ UIPanel :: enum {
 
 UIPanelSet :: bit_set[UIPanel]
 
-
 ui_state: struct {
-    visible_panels: UIPanelSet
+    visible_panels:   UIPanelSet,
 }
 
 ui_init :: proc() {
@@ -37,6 +37,7 @@ ui_init :: proc() {
     }
 
     im_sdlgpu.Init(&init_info)
+    
     ui_toggle_visibility({ .None })
 }
  
@@ -77,6 +78,7 @@ ui_toggle_visibility :: proc(panel: UIPanelSet) {
 }
 
 ui_show_general_panel :: proc() {
+    defer im.End()
     if im.Begin("General") {
         if im.CollapsingHeader("Entities") {
             for &e in world.entities {
@@ -123,14 +125,20 @@ ui_show_general_panel :: proc() {
         }
     }
     
-    im.End()
 }
 
 ui_show_server_panel :: proc() {
+    defer im.End()
     if im.Begin("Server") {
-        if im.Button("Connect to server") {
-            user_connect_to_server_async(steam_user.user, "2600:3c00::f03c:95ff:fe44:bdfc", 27015)
+        server_infos := client_serverlist_state.server_infos
+        count := client_serverlist_state.server_info_count
+        
+        for i in 0..<count {
+            button_name_buffer: [265]u8
+            button_name := fmt.bprintf(button_name_buffer[:], "Connect to server %v", server_infos[i].steamID)
+            if im.Button(strings.unsafe_string_to_cstring(button_name)) {
+                user_connect_to_server_async(steam_user.user, server_infos[i].steamID)
+            }
         }
     }
-    im.End()
 }

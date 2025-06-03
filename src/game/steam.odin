@@ -10,7 +10,6 @@ import "core:strings"
 
 import steam "../../third_party/steamworks"
 
-
 steam_user: struct {
     user: ^steam.IUser
 }
@@ -18,8 +17,7 @@ steam_user: struct {
 number_of_current_players: int
 
 steam_init :: proc () {
-    APP_ID :: 3070970 
-    if steam.RestartAppIfNecessary(APP_ID) {
+    if steam.RestartAppIfNecessary(3070970) {
         log.info("Launching app through steam...")
         return 
     }
@@ -40,12 +38,16 @@ steam_init :: proc () {
     log.info("Steam User State:", steam.Friends_GetPersonaState(steam.Friends()))
     
     steam_user.user = steam.User()
+    
+    steam_pipe := steam.GetHSteamPipe()
+    if steam_pipe == 0 {
+        log.panic("Failed to get valid Steam pipe handle")
+    }
 }
 
 steam_cleanup :: proc() {
     log.info("Shutting down Steamworks.")
     
-    steam.User_CancelAuthTicket(steam_user.user, client_ticket)
     steam.Shutdown()
 }
 
@@ -65,6 +67,11 @@ steam_run_callbacks :: proc() {
     temp_mem := make([dynamic]byte, context.temp_allocator)
 
     steam_pipe := steam.GetHSteamPipe()
+    if steam_pipe == 0 {
+        log.error("Invalid Steam pipe handle in steam_run_callbacks")
+        return
+    }
+    
     steam.ManualDispatch_RunFrame(steam_pipe)
     callback: steam.CallbackMsg
 
@@ -80,6 +87,7 @@ steam_run_callbacks :: proc() {
             
             if !steam.ManualDispatch_GetAPICallResult(steam_pipe, call_completed.hAsyncCall, temp_call_res, callback.cubParam, callback.iCallback, &{}) {
                 log.errorf("Failed to get steam api call result for callback: %s", callback.iCallback)
+                steam.ManualDispatch_FreeLastCallback(steam_pipe)
                 return
             }
             
@@ -87,8 +95,10 @@ steam_run_callbacks :: proc() {
             _steam_handle_api_call_result(call_completed, temp_call_res)
             
         case .GameOverlayActivated:
-            fmt.println("GameOverlayActivated")
-            _onGameOverlayActivated(transmute(^steam.GameOverlayActivated)callback.pubParam)
+            _onGameOverlayActivated(cast(^steam.GameOverlayActivated)callback.pubParam)
+        
+        case .SteamRelayNetworkStatus:
+            _onSteamRelayNetworkStatus(cast(^steam.SteamRelayNetworkStatus)callback.pubParam)
         
         case:
             fmt.println("Unhandled Callback:", callback.iCallback)
@@ -98,8 +108,17 @@ steam_run_callbacks :: proc() {
     }
 }
 
-_onGameOverlayActivated :: proc(using data: ^steam.GameOverlayActivated) {
-    fmt.println("Is overlay active =", bActive)
+_onGameOverlayActivated :: proc(data: ^steam.GameOverlayActivated) {
+    fmt.println("Is overlay active =", data.bActive)
+}
+
+_onSteamRelayNetworkStatus :: proc(data: ^steam.SteamRelayNetworkStatus) {
+    fmt.printfln("[STEAM] --- SteamRelayNetworkStatus")
+    fmt.printfln("    eAvail = %v", data.eAvail)
+    fmt.printfln("    bPingMeasurementInProgress = %v", data.bPingMeasurementInProgress)
+    fmt.printfln("    eAvailNetworkConfig = %v", data.eAvailNetworkConfig)
+    fmt.printfln("    eAvailAnyRelay = %v", data.eAvailAnyRelay)
+    fmt.printfln("    debugMsg = %s", steam_dbgmsg_to_string(&data.debugMsg))
 }
 
 _onGetNumberOfCurrentPlayers :: proc(data: ^steam.NumberOfCurrentPlayers) {
@@ -119,4 +138,22 @@ _steam_handle_api_call_result :: proc(call: ^steam.SteamAPICallCompleted, temp_c
         _onGetNumberOfCurrentPlayers(transmute(^steam.NumberOfCurrentPlayers)temp_call_res)
     }
     
+}
+
+steam_dbgmsg_to_string :: proc(msg: ^[256]u8) -> string {
+    // Find the length of the message (up to the null terminator)
+    msg_len := 0
+    for i := 0; i < len(msg); i += 1 {
+        if msg[i] == 0 {
+            msg_len = i
+            break
+        }
+    }
+    
+    msg_str, err := strings.clone_from_bytes(msg[:msg_len], context.temp_allocator)
+    if err != .None {
+        log.error("strings.clone_from_bytes failed with error:", err)
+    }
+    
+    return msg_str
 }
