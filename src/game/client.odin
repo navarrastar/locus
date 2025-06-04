@@ -281,8 +281,44 @@ _client_update_serverlist_ServerResponded_callback :: proc "c" (
 	server_index: i32,
 ) {
 	context = runtime.default_context()
+	defer free(self)
+	
 	fmt.println("Server responded:", server_index)
 
+}
+
+_client_update_serverlist_ServerFailedToRespond_callback :: proc "c" (
+	self: ^ServerListResponse,
+	request: steam.HServerListRequest,
+	server_index: i32,
+) {
+	context = runtime.default_context()
+	defer free(self)
+	
+	fmt.println("Server failed to respond:", server_index)
+}
+
+_client_update_serverlist_RefreshComplete_callback :: proc "c" (
+	self: ^ServerListResponse,
+	request: steam.HServerListRequest,
+	response: steam.EMatchMakingServerResponse,
+) {
+    context = runtime.default_context()
+    defer free(self)
+    
+    switch response {
+    case .NoServersListedOnMasterServer:
+        fmt.println("You made a serverlist request which returned no matching servers")
+        return
+        
+    case .ServerFailedToRespond:
+        fmt.println("You tried to refresh the serverlist, but the master server failed to respond")
+        return
+    
+    case .ServerResponded: 
+        // continue as usual, do nothing
+    }
+    
 	client_serverlist_state.request = request
 
 	count := steam.MatchmakingServers_GetServerCount(client_state.mm_servers, request)
@@ -294,28 +330,5 @@ _client_update_serverlist_ServerResponded_callback :: proc "c" (
 			request,
 			i,
 		)
-	}
-}
-
-_client_update_serverlist_ServerFailedToRespond_callback :: proc "c" (
-	self: ^ServerListResponse,
-	request: steam.HServerListRequest,
-	server_index: i32,
-) {
-	context = runtime.default_context()
-	fmt.println("Server failed to respond:", server_index)
-}
-
-_client_update_serverlist_RefreshComplete_callback :: proc "c" (
-	self: ^ServerListResponse,
-	request: steam.HServerListRequest,
-	response: steam.EMatchMakingServerResponse,
-) {
-	context = runtime.default_context()
-	fmt.println("Refresh complete with response:", response)
-
-	if client_serverlist_state.response == self {
-		free(client_serverlist_state.response)
-		client_serverlist_state.response = nil
 	}
 }

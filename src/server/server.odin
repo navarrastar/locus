@@ -9,6 +9,7 @@ import "core:slice"
 import "core:strconv"
 import "core:strings"
 import "core:sync"
+import "core:time"
 
 import steam "../../third_party/steamworks"
 import toml "../../third_party/toml_parser"
@@ -68,6 +69,7 @@ Config :: struct {
 	query_port:             u16,
 
 	// [Gameplay]
+	tick_rate:              u8
 	server_name:            string,
 	max_players:            i64,
 
@@ -158,6 +160,8 @@ init :: proc() {
 }
 
 update :: proc() {
+    time.sleep(1/server_state.config.tick_rate * 1000)
+    
 	_run_callbacks()
 	_poll_network()
 }
@@ -519,6 +523,10 @@ _init_config :: proc() {
 	game_server_name, ok_name := toml.get_string(table, "Gameplay", "server_name")
 	if !ok_name do panic("config.toml: Missing or invalid [Gameplay].server_name (string)")
 	server_state.config.server_name = strings.clone(game_server_name)
+
+	tick_rate_i64, ok_tr := toml.get_i64(table, "Gameplay", "tick_rate")
+	if !ok_tr do panic("config.toml: Missing or invalid [Gameplay].server_name (string)")
+	server_state.config.tick_rate = u8(tick_rate_i64)
 
 	game_max_players_i64, ok_mp := toml.get_i64(table, "Gameplay", "max_players")
 	if !ok_mp do panic("config.toml: Missing or invalid [Gameplay].max_players (integer)")

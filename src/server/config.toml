@@ -5,7 +5,9 @@ query_port = 27030
 
 [Gameplay]
 server_name = "Locus Server"
+tick_rate = 16
 max_players = 8
+
 
 [Steam]
 accept_anonymous_logon = true
