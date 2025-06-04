@@ -69,7 +69,7 @@ Config :: struct {
 	query_port:             u16,
 
 	// [Gameplay]
-	tick_rate:              u8
+	tick_rate:              u8,
 	server_name:            string,
 	max_players:            i64,
 
@@ -160,7 +160,7 @@ init :: proc() {
 }
 
 update :: proc() {
-    time.sleep(1/server_state.config.tick_rate * 1000)
+    time.sleep(time.Duration(1_000_000_000 / time.Duration(server_state.config.tick_rate)))
     
 	_run_callbacks()
 	_poll_network()
