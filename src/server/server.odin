@@ -116,8 +116,6 @@ init :: proc() {
 		&server_state.err_msg,
 	)
 	
-	fmt.println(server_state.err_msg)
-
 	server_state.game_server = steam.GameServer()
 	server_state.steamID = steam.GameServer_GetSteamID(server_state.game_server)
 
@@ -135,7 +133,6 @@ init :: proc() {
 	
 	steam.GameServer_SetAdvertiseServerActive(server_state.game_server, true)
 
-	
 	steam.ManualDispatch_Init()
 
 	log.assertf(res == .OK, "SteamGameServer_InitEx: ", res)
