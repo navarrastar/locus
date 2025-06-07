@@ -49,8 +49,6 @@ Network_MessageType :: enum u8 {
 	Authentication,
 }
 
-
-
 ServerError :: enum {
 	None,
 	DuplicateRequest,
@@ -117,13 +115,11 @@ init :: proc() {
 		"0.0.1",
 		&server_state.err_msg,
 	)
-
-	steam.ManualDispatch_Init()
-
-	log.assertf(res == .OK, "SteamGameServer_InitEx: ", res)
-	log.info("SteamGameServer_InitEx successful")
+	
+	fmt.println(server_state.err_msg)
 
 	server_state.game_server = steam.GameServer()
+	server_state.steamID = steam.GameServer_GetSteamID(server_state.game_server)
 
 	steam.GameServer_SetProduct(server_state.game_server, "locus")
 	steam.GameServer_SetGameDescription(server_state.game_server, "Game Server Description")
@@ -135,11 +131,15 @@ init :: proc() {
 	steam.GameServer_SetPasswordProtected(server_state.game_server, false)
 	steam.GameServer_SetServerName(server_state.game_server, "Locus Server")
 	steam.GameServer_SetDedicatedServer(server_state.game_server, true)
+	steam.GameServer_LogOnAnonymous(server_state.game_server)
+	
 	steam.GameServer_SetAdvertiseServerActive(server_state.game_server, true)
 
-	steam.GameServer_LogOnAnonymous(server_state.game_server)
+	
+	steam.ManualDispatch_Init()
 
-	server_state.steamID = steam.GameServer_GetSteamID(server_state.game_server)
+	log.assertf(res == .OK, "SteamGameServer_InitEx: ", res)
+	log.info("SteamGameServer_InitEx successful")
 
 	server_state.net_sockets = steam.GameServerNetworkingSockets()
 	server_state.listen_socket = steam.NetworkingSockets_CreateHostedDedicatedServerListenSocket(
