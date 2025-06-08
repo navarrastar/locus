@@ -62,14 +62,14 @@ ServerError :: enum {
 
 Config :: struct {
 	// [Network]
-	server_ip:              string,
-	game_port:              u16,
-	query_port:             u16,
+	server_ip:   string,
+	game_port:   u16,
+	query_port:  u16,
 
 	// [Gameplay]
-	tick_rate:              u16,
-	server_name:            string,
-	max_players:            u16,
+	tick_rate:   u16,
+	server_name: string,
+	max_players: u16,
 
 	// [Steam]
 	server_mode: u16,
@@ -112,27 +112,25 @@ init :: proc() {
 	)
 	log.assertf(res == .OK, "SteamGameServer_InitEx: ", res)
 	log.info("SteamGameServer_InitEx successful")
-	
+
 	server_state.game_server = steam.GameServer()
 	server_state.steamID = steam.GameServer_GetSteamID(server_state.game_server)
 
-	steam.GameServer_SetProduct(server_state.game_server, "locus")
-	steam.GameServer_SetGameDescription(server_state.game_server, "Game Server Description")
+	steam.GameServer_SetModDir(server_state.game_server, "locus")
+	steam.GameServer_SetProduct(server_state.game_server, "3070970")
+	steam.GameServer_SetGameDescription(server_state.game_server, "locus server description")
 	steam.GameServer_SetGameTags(server_state.game_server, "pvp,multiplayer")
 	steam.GameServer_SetMaxPlayerCount(
 		server_state.game_server,
 		i32(server_state.config.max_players),
 	)
-	steam.GameServer_SetPasswordProtected(server_state.game_server, false)
-	steam.GameServer_SetServerName(server_state.game_server, "Locus Server")
+	steam.GameServer_SetServerName(server_state.game_server, "locus server")
 	steam.GameServer_SetDedicatedServer(server_state.game_server, true)
 	steam.GameServer_LogOnAnonymous(server_state.game_server)
-	
+
 	steam.GameServer_SetAdvertiseServerActive(server_state.game_server, true)
 
 	steam.ManualDispatch_Init()
-
-
 
 	server_state.net_sockets = steam.GameServerNetworkingSockets()
 	server_state.listen_socket = steam.NetworkingSockets_CreateHostedDedicatedServerListenSocket(
@@ -153,8 +151,8 @@ init :: proc() {
 }
 
 update :: proc() {
-    time.sleep(time.Duration(1_000_000_000 / time.Duration(server_state.config.tick_rate)))
-    
+	time.sleep(time.Duration(1_000_000_000 / time.Duration(server_state.config.tick_rate)))
+
 	_run_callbacks()
 	_poll_network()
 }
