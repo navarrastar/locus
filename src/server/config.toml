@@ -1,6 +1,6 @@
 [Network]
 server_ip = "2600:3c00::f03c:95ff:fe44:bdfc"
-server_port = 27015
+game_port = 27015
 query_port = 27030
 
 [Gameplay]
@@ -10,4 +10,4 @@ max_players = 8
 
 
 [Steam]
-accept_anonymous_logon = true
+server_mode = 1

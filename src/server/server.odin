@@ -63,16 +63,16 @@ ServerError :: enum {
 Config :: struct {
 	// [Network]
 	server_ip:              string,
-	server_port:            u16,
+	game_port:              u16,
 	query_port:             u16,
 
 	// [Gameplay]
-	tick_rate:              u8,
+	tick_rate:              u16,
 	server_name:            string,
-	max_players:            i64,
+	max_players:            u16,
 
 	// [Steam]
-	accept_anonymous_logon: bool,
+	server_mode: u16,
 }
 
 server_state: struct {
@@ -102,19 +102,16 @@ init :: proc() {
 	log.info("Starting SteamGameServer")
 
 	server_mode: steam.EServerMode
-	if server_state.config.accept_anonymous_logon == true {
-		server_mode = .NoAuthentication
-	} else {
-		server_mode = .AuthenticationAndSecure
-	}
 	res := steam.SteamGameServer_InitEx(
 		0,
-		server_state.config.server_port,
+		server_state.config.game_port,
 		server_state.config.query_port,
-		server_mode,
+		steam.EServerMode(server_state.config.server_mode),
 		"0.0.1",
 		&server_state.err_msg,
 	)
+	log.assertf(res == .OK, "SteamGameServer_InitEx: ", res)
+	log.info("SteamGameServer_InitEx successful")
 	
 	server_state.game_server = steam.GameServer()
 	server_state.steamID = steam.GameServer_GetSteamID(server_state.game_server)
@@ -135,8 +132,7 @@ init :: proc() {
 
 	steam.ManualDispatch_Init()
 
-	log.assertf(res == .OK, "SteamGameServer_InitEx: ", res)
-	log.info("SteamGameServer_InitEx successful")
+
 
 	server_state.net_sockets = steam.GameServerNetworkingSockets()
 	server_state.listen_socket = steam.NetworkingSockets_CreateHostedDedicatedServerListenSocket(
@@ -507,9 +503,9 @@ _init_config :: proc() {
 	if !ok_ip do panic("config.toml: Missing or invalid [Network].server_ip (string)")
 	server_state.config.server_ip = strings.clone(net_server_ip)
 
-	net_server_port_i64, ok_sp := toml.get_i64(table, "Network", "server_port")
-	if !ok_sp do panic("config.toml: Missing or invalid [Network].server_port (integer)")
-	server_state.config.server_port = u16(net_server_port_i64)
+	net_game_port_i64, ok_sp := toml.get_i64(table, "Network", "game_port")
+	if !ok_sp do panic("config.toml: Missing or invalid [Network].game_port (integer)")
+	server_state.config.game_port = u16(net_game_port_i64)
 
 	net_query_port_i64, ok_qp := toml.get_i64(table, "Network", "query_port")
 	if !ok_qp do panic("config.toml: Missing or invalid [Network].query_port (integer)")
@@ -523,26 +519,26 @@ _init_config :: proc() {
 
 	tick_rate_i64, ok_tr := toml.get_i64(table, "Gameplay", "tick_rate")
 	if !ok_tr do panic("config.toml: Missing or invalid [Gameplay].server_name (string)")
-	server_state.config.tick_rate = u8(tick_rate_i64)
+	server_state.config.tick_rate = u16(tick_rate_i64)
 
 	game_max_players_i64, ok_mp := toml.get_i64(table, "Gameplay", "max_players")
 	if !ok_mp do panic("config.toml: Missing or invalid [Gameplay].max_players (integer)")
-	server_state.config.max_players = game_max_players_i64
+	server_state.config.max_players = u16(game_max_players_i64)
 	// [Gameplay]
 
 	// [Steam]
-	steam_accept_anon, ok_anon := toml.get_bool(table, "Steam", "accept_anonymous_logon")
-	if !ok_anon do panic("config.toml: Missing or invalid [Steam].accept_anonymous_logon (boolean)")
-	server_state.config.accept_anonymous_logon = steam_accept_anon
+	steam_server_mode_i64, ok_anon := toml.get_i64(table, "Steam", "server_mode")
+	if !ok_anon do panic("config.toml: Missing or invalid [Steam].server_mode (integer)")
+	server_state.config.server_mode = u16(steam_server_mode_i64)
 	// [Steam]
 
 	log.info("Server configuration loaded:")
 	log.infof("  Network.server_ip: %s", server_state.config.server_ip)
-	log.infof("  Network.server_port: %d", server_state.config.server_port)
+	log.infof("  Network.game_port: %d", server_state.config.game_port)
 	log.infof("  Network.query_port: %d", server_state.config.query_port)
 	log.infof("  Gameplay.server_name: %s", server_state.config.server_name)
 	log.infof("  Gameplay.max_players: %d", server_state.config.max_players)
-	log.infof("  Steam.accept_anonymous_logon: %t", server_state.config.accept_anonymous_logon)
+	log.infof("  Steam.server_mode: %t", server_state.config.server_mode)
 }
 
 @(require_results)
