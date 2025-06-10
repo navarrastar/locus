@@ -129,16 +129,25 @@ _user_proc_connect_to_server :: proc(args_ptr: rawptr) {
 	steam.NetworkingIdentity_SetSteamID(&net_identity, args.serverID)
 	fmt.printfln("Client: Attempting SDR connect to Server: %v", args.serverID)
 
-	client_state.conn = steam.NetworkingSockets_ConnectToHostedDedicatedServer(
+	client_state.conn = steam.NetworkingSockets_ConnectP2P(
 		client_state.net_sockets,
 		&net_identity,
 		0,
 		0,
 		nil,
 	)
-
+	
 	timeout_start := time.tick_now()
 	timeout_end :: 15 * time.Second
+	conn_ok := steam.NetworkingSockets_GetConnectionInfo(
+	    client_state.net_sockets,
+		client_state.conn,
+		client_state.conn_info
+	)
+	if !conn_ok {
+    	args.err = .Unknown
+        return
+	}
 	for client_state.conn_info.eState != .Connected {
 		fmt.println("Client: client_state.conn_info.eState: ", client_state.conn_info.eState)
 
@@ -182,6 +191,8 @@ _user_proc_connect_to_server :: proc(args_ptr: rawptr) {
 		&ticket_length,
 		{},
 	)
+	
+	
 
 	if ticket == 0 || ticket_length == 0 {
 		fmt.println("Client: Failed to get auth session ticket.")
@@ -281,10 +292,8 @@ _client_update_serverlist_ServerResponded_callback :: proc "c" (
 	server_index: i32,
 ) {
 	context = runtime.default_context()
-	defer free(self)
 	
 	fmt.println("Server responded:", server_index)
-
 }
 
 _client_update_serverlist_ServerFailedToRespond_callback :: proc "c" (
@@ -293,7 +302,6 @@ _client_update_serverlist_ServerFailedToRespond_callback :: proc "c" (
 	server_index: i32,
 ) {
 	context = runtime.default_context()
-	defer free(self)
 	
 	fmt.println("Server failed to respond:", server_index)
 }
@@ -304,7 +312,6 @@ _client_update_serverlist_RefreshComplete_callback :: proc "c" (
 	response: steam.EMatchMakingServerResponse,
 ) {
     context = runtime.default_context()
-    defer free(self)
     
     switch response {
     case .NoServersListedOnMasterServer:

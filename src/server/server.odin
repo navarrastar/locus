@@ -133,7 +133,7 @@ init :: proc() {
 	steam.ManualDispatch_Init()
 
 	server_state.net_sockets = steam.GameServerNetworkingSockets()
-	server_state.listen_socket = steam.NetworkingSockets_CreateHostedDedicatedServerListenSocket(
+	server_state.listen_socket = steam.NetworkingSockets_CreateListenSocketP2P(
 		server_state.net_sockets,
 		0,
 		0,

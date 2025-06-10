@@ -1,0 +1,1 @@
+odin run src/ -define:GAME_COORDINATOR=true
