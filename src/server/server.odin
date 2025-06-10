@@ -208,6 +208,7 @@ _run_callbacks :: proc() {
 					"Failed to get steam api call result for callback: %s",
 					callback.iCallback,
 				)
+				steam.ManualDispatch_FreeLastCallback(steam_pipe)
 				return
 			}
 
