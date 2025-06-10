@@ -184,7 +184,8 @@ _run_callbacks :: proc() {
 	callback: steam.CallbackMsg
 
 	for steam.ManualDispatch_GetNextCallback(steam_pipe, &callback) {
-		fmt.println("Got a callback")
+	    defer(steam.ManualDispatch_FreeLastCallback(steam_pipe))
+			
 		#partial switch callback.iCallback {
 		case .SteamAPICallCompleted:
 			fmt.println("CallResult: ", callback)
@@ -208,7 +209,6 @@ _run_callbacks :: proc() {
 					"Failed to get steam api call result for callback: %s",
 					callback.iCallback,
 				)
-				steam.ManualDispatch_FreeLastCallback(steam_pipe)
 				return
 			}
 
@@ -227,8 +227,6 @@ _run_callbacks :: proc() {
 		case:
 			fmt.println("Unhandled Callback:", callback.iCallback)
 		}
-
-		steam.ManualDispatch_FreeLastCallback(steam_pipe)
 	}
 }
 
