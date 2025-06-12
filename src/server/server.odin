@@ -78,6 +78,7 @@ Config :: struct {
 server_state: struct {
 	config:        Config,
 	steamID:       steam.CSteamID,
+	net_utils:     ^steam.INetworkingUtils,
 	game_server:   ^steam.IGameServer,
 	net_sockets:   ^steam.INetworkingSockets,
 	listen_socket: steam.HSteamListenSocket,
@@ -115,6 +116,7 @@ init :: proc() {
 
 	server_state.game_server = steam.GameServer()
 	server_state.steamID = steam.GameServer_GetSteamID(server_state.game_server)
+	server_state.net_utils = steam.NetworkingUtils_SteamAPI()
 
 	steam.GameServer_SetModDir(server_state.game_server, "locus")
 	steam.GameServer_SetProduct(server_state.game_server, "3070970")
@@ -127,6 +129,8 @@ init :: proc() {
 	steam.GameServer_SetServerName(server_state.game_server, "locus server")
 	steam.GameServer_SetDedicatedServer(server_state.game_server, true)
 	steam.GameServer_LogOnAnonymous(server_state.game_server)
+
+	steam.NetworkingUtils_InitRelayNetworkAccess(server_state.net_utils)
 
 	steam.GameServer_SetAdvertiseServerActive(server_state.game_server, true)
 
@@ -184,8 +188,8 @@ _run_callbacks :: proc() {
 	callback: steam.CallbackMsg
 
 	for steam.ManualDispatch_GetNextCallback(steam_pipe, &callback) {
-	    defer(steam.ManualDispatch_FreeLastCallback(steam_pipe))
-			
+		defer (steam.ManualDispatch_FreeLastCallback(steam_pipe))
+
 		#partial switch callback.iCallback {
 		case .SteamAPICallCompleted:
 			fmt.println("CallResult: ", callback)
@@ -197,14 +201,16 @@ _run_callbacks :: proc() {
 				allocator = context.temp_allocator,
 			)
 
-			if !steam.ManualDispatch_GetAPICallResult(
+			failed: bool
+			steam.ManualDispatch_GetAPICallResult(
 				steam_pipe,
 				call_completed.hAsyncCall,
 				temp_call_res,
 				callback.cubParam,
 				callback.iCallback,
-				&{},
-			) {
+				&failed,
+			)
+			if failed == true {
 				log.errorf(
 					"Failed to get steam api call result for callback: %s",
 					callback.iCallback,
@@ -222,6 +228,11 @@ _run_callbacks :: proc() {
 		case .SteamNetConnectionStatusChangedCallback:
 			_callback_NetConnectionStatusChanged(
 				cast(^steam.SteamNetConnectionStatusChangedCallback)callback.pubParam,
+			)
+
+		case .SteamNetAuthenticationStatus:
+			_callback_NetAuthenticationStatus(
+				cast(^steam.SteamNetAuthenticationStatus)callback.pubParam,
 			)
 
 		case:
@@ -324,6 +335,10 @@ _callback_ValidateAuthTicketResponse :: proc(data: ^steam.ValidateAuthTicketResp
 	case .AuthTicketCanceled:
 		_remove_client(data.SteamID)
 	}
+}
+
+_callback_NetAuthenticationStatus :: proc(data: ^steam.SteamNetAuthenticationStatus) {
+   	fmt.printfln("SteamNetAuthenticationStatus callback called with data: %v", data)
 }
 
 _find_connection_by_steamID :: proc(steamID: steam.CSteamID) -> int {

@@ -14,8 +14,8 @@ import "../server"
 MAX_SERVER_INFOS :: 128
 
 client_state: struct {
-	user:        ^steam.IUser,
 	ticket:      steam.HAuthTicket,
+	net_utils:   ^steam.INetworkingUtils,
 	conn:        steam.HSteamNetConnection,
 	conn_info:   ^steam.SteamNetConnectionInfo,
 	net_sockets: ^steam.INetworkingSockets,
@@ -31,30 +31,33 @@ client_serverlist_state: struct {
 }
 
 ServerListResponse :: struct {
-    vtable: ^ServerListResponseVTable
+	vtable: ^ServerListResponseVTable,
 }
 
 ServerListResponseVTable :: struct {
-		ServerResponded:       proc "c" (
-			self: ^ServerListResponse,
-			request: steam.HServerListRequest,
-			server_index: i32,
-		),
-		ServerFailedToRespond: proc "c" (
-			self: ^ServerListResponse,
-			request: steam.HServerListRequest,
-			server_index: i32,
-		),
-		RefreshComplete:       proc "c" (
-			self: ^ServerListResponse,
-			request: steam.HServerListRequest,
-			response: steam.EMatchMakingServerResponse,
-		),
+	ServerResponded:       proc "c" (
+		self: ^ServerListResponse,
+		request: steam.HServerListRequest,
+		server_index: i32,
+	),
+	ServerFailedToRespond: proc "c" (
+		self: ^ServerListResponse,
+		request: steam.HServerListRequest,
+		server_index: i32,
+	),
+	RefreshComplete:       proc "c" (
+		self: ^ServerListResponse,
+		request: steam.HServerListRequest,
+		response: steam.EMatchMakingServerResponse,
+	),
 }
 
 client_init :: proc() {
 	client_state.net_sockets = steam.NetworkingSockets_SteamAPI()
 	client_state.mm_servers = steam.MatchmakingServers()
+	client_state.net_utils = steam.NetworkingUtils_SteamAPI()
+
+	steam.NetworkingUtils_InitRelayNetworkAccess(client_state.net_utils)
 
 	client_update_serverlist()
 }
@@ -85,11 +88,10 @@ client_leave :: proc() {
 	)
 }
 
-
 _client_update_serverlist_vtable: ServerListResponseVTable = {
-    ServerResponded = _client_update_serverlist_ServerResponded_callback,
-    ServerFailedToRespond = _client_update_serverlist_ServerFailedToRespond_callback,
-    RefreshComplete = _client_update_serverlist_RefreshComplete_callback
+	ServerResponded       = _client_update_serverlist_ServerResponded_callback,
+	ServerFailedToRespond = _client_update_serverlist_ServerFailedToRespond_callback,
+	RefreshComplete       = _client_update_serverlist_RefreshComplete_callback,
 }
 client_update_serverlist :: proc() {
 	response := new(ServerListResponse)
@@ -106,10 +108,10 @@ client_update_serverlist :: proc() {
 	)
 }
 
-user_connect_to_server_async :: proc(user: ^steam.IUser, serverID: steam.CSteamID) {
+user_connect_to_server_async :: proc(serverID: steam.CSteamID) {
 	args := new(server.ConnectionArgs)
 	args^ = server.ConnectionArgs {
-		user     = user,
+		user     = steam_user.user,
 		serverID = serverID,
 		err      = .None,
 		callback = user_connection_finished,
@@ -123,12 +125,12 @@ _user_proc_connect_to_server :: proc(args_ptr: rawptr) {
 	defer free(args)
 	defer (args->callback())
 
-	client_state.user = args.user // is this needed?
-
 	net_identity: steam.SteamNetworkingIdentity
 	steam.NetworkingIdentity_SetSteamID(&net_identity, args.serverID)
 	fmt.printfln("Client: Attempting SDR connect to Server: %v", args.serverID)
 
+	timeout_start := time.tick_now()
+	timeout_end :: 15 * time.Second
 	client_state.conn = steam.NetworkingSockets_ConnectP2P(
 		client_state.net_sockets,
 		&net_identity,
@@ -136,43 +138,19 @@ _user_proc_connect_to_server :: proc(args_ptr: rawptr) {
 		0,
 		nil,
 	)
-	
-	timeout_start := time.tick_now()
-	timeout_end :: 15 * time.Second
-	conn_ok := steam.NetworkingSockets_GetConnectionInfo(
-	    client_state.net_sockets,
-		client_state.conn,
-		client_state.conn_info
-	)
-	if !conn_ok {
-    	args.err = .Unknown
-        return
-	}
-	for client_state.conn_info.eState != .Connected {
-		fmt.println("Client: client_state.conn_info.eState: ", client_state.conn_info.eState)
 
-		conn_ok := steam.NetworkingSockets_GetConnectionInfo(
-			client_state.net_sockets,
-			client_state.conn,
-			client_state.conn_info,
-		)
-		if !conn_ok {
-			args.err = .Unknown
-			break
-		}
+	for client_state.conn == steam.HSteamNetConnection_Invalid {
+		fmt.println("Client: client_state.conn: ", client_state.conn)
 
 		if time.tick_since(timeout_start) > timeout_end {
 			fmt.println("Client: Connection timed out.")
-			if client_state.conn != steam.HSteamNetConnection_Invalid {
-				steam.NetworkingSockets_CloseConnection(
-					client_state.net_sockets,
-					client_state.conn,
-					0,
-					"Timeout",
-					false,
-				)
-				client_state.conn = steam.HSteamNetConnection_Invalid
-			}
+			steam.NetworkingSockets_CloseConnection(
+				client_state.net_sockets,
+				client_state.conn,
+				0,
+				"Timeout",
+				false,
+			)
 			args.err = .Timeout
 			break
 		}
@@ -191,8 +169,6 @@ _user_proc_connect_to_server :: proc(args_ptr: rawptr) {
 		&ticket_length,
 		{},
 	)
-	
-	
 
 	if ticket == 0 || ticket_length == 0 {
 		fmt.println("Client: Failed to get auth session ticket.")
@@ -292,7 +268,7 @@ _client_update_serverlist_ServerResponded_callback :: proc "c" (
 	server_index: i32,
 ) {
 	context = runtime.default_context()
-	
+
 	fmt.println("Server responded:", server_index)
 }
 
@@ -302,7 +278,7 @@ _client_update_serverlist_ServerFailedToRespond_callback :: proc "c" (
 	server_index: i32,
 ) {
 	context = runtime.default_context()
-	
+
 	fmt.println("Server failed to respond:", server_index)
 }
 
@@ -311,21 +287,21 @@ _client_update_serverlist_RefreshComplete_callback :: proc "c" (
 	request: steam.HServerListRequest,
 	response: steam.EMatchMakingServerResponse,
 ) {
-    context = runtime.default_context()
-    
-    switch response {
-    case .NoServersListedOnMasterServer:
-        fmt.println("You made a serverlist request which returned no matching servers")
-        return
-        
-    case .ServerFailedToRespond:
-        fmt.println("You tried to refresh the serverlist, but the master server failed to respond")
-        return
-    
-    case .ServerResponded: 
-        // continue as usual, do nothing
-    }
-    
+	context = runtime.default_context()
+
+	switch response {
+	case .NoServersListedOnMasterServer:
+		fmt.println("You made a serverlist request which returned no matching servers")
+		return
+
+	case .ServerFailedToRespond:
+		fmt.println("You tried to refresh the serverlist, but the master server failed to respond")
+		return
+
+	case .ServerResponded:
+	// continue as usual, do nothing
+	}
+
 	client_serverlist_state.request = request
 
 	count := steam.MatchmakingServers_GetServerCount(client_state.mm_servers, request)

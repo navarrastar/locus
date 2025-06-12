@@ -137,7 +137,7 @@ ui_show_server_panel :: proc() {
             button_name_buffer: [265]u8
             button_name := fmt.bprintf(button_name_buffer[:], "Connect to server %v", server_infos[i].steamID)
             if im.Button(strings.unsafe_string_to_cstring(button_name)) {
-                user_connect_to_server_async(steam_user.user, server_infos[i].steamID)
+                user_connect_to_server_async(server_infos[i].steamID)
             }
         }
     }

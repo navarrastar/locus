@@ -7,12 +7,10 @@ import toml "../third_party/toml_parser"
 
 import "game"
 import "server"
-import "game_coordinator"
 
 // Define none of these for game client
 // Never define both of them
 SERVER :: #config(SERVER, false)
-GAME_COORDINATOR :: #config(GAME_COORDINATOR, false)
 
 LAUNCH_OPTIONS :: #load("../launch_options.toml")
 launch_options: struct {
@@ -46,9 +44,6 @@ main :: proc() {
     when SERVER {
        	server.init()
        	defer server.cleanup()
-    } else when GAME_COORDINATOR {
-        game_coordinator.init()
-        defer game_coordinator.cleanup()
     } else {
         game.init()
         defer game.cleanup()
@@ -59,8 +54,6 @@ main :: proc() {
 
 		when SERVER {
 	        server.update()
-		} else when GAME_COORDINATOR {
-		    game_coordinator.update()
 		} else {
 		    game.update()
 		}

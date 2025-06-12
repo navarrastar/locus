@@ -27,22 +27,19 @@ steam_init :: proc () {
         err_str := string(cast(cstring)&err_msg[0])
         log.panicf("steam.InitFlat failed with code '{}' and message \"{}\"", err, err_str)
     }
+    log.assert(steam.User_BLoggedOn(steam.User()), "User is not logged in to steam")
+    log.info("Steam User Name:", string(steam.Friends_GetPersonaName(steam.Friends())))
+    log.info("Steam User State:", steam.Friends_GetPersonaState(steam.Friends()))
+    steam_user.user = steam.User()
     
     steam.Client_SetWarningMessageHook(steam.Client(), _steam_debug_text_hook)
 
     steam.ManualDispatch_Init()
-
-    log.assert(steam.User_BLoggedOn(steam.User()), "User is not logged in to steam")
-
-    log.info("Steam User Name:", string(steam.Friends_GetPersonaName(steam.Friends())))
-    log.info("Steam User State:", steam.Friends_GetPersonaState(steam.Friends()))
     
-    steam_user.user = steam.User()
-    
-    steam_pipe := steam.GetHSteamPipe()
-    if steam_pipe == 0 {
+    if steam.GetHSteamPipe() == 0 {
         log.panic("Failed to get valid Steam pipe handle")
     }
+    
 }
 
 steam_cleanup :: proc() {
@@ -100,6 +97,8 @@ steam_run_callbacks :: proc() {
         case .SteamRelayNetworkStatus:
             _onSteamRelayNetworkStatus(cast(^steam.SteamRelayNetworkStatus)callback.pubParam)
         
+        case .SteamNetConnectionStatusChangedCallback:
+            _onConnectionStatusChanged(cast(^steam.SteamNetConnectionStatusChangedCallback)callback.pubParam)
         case:
             fmt.println("Unhandled Callback:", callback.iCallback)
         }
@@ -119,6 +118,14 @@ _onSteamRelayNetworkStatus :: proc(data: ^steam.SteamRelayNetworkStatus) {
     fmt.printfln("    eAvailNetworkConfig = %v", data.eAvailNetworkConfig)
     fmt.printfln("    eAvailAnyRelay = %v", data.eAvailAnyRelay)
     fmt.printfln("    debugMsg = %s", steam_dbgmsg_to_string(&data.debugMsg))
+}
+
+_onConnectionStatusChanged :: proc(data: ^steam.SteamNetConnectionStatusChangedCallback) {
+    fmt.printfln("[STEAM] --- SteamNetConnectionStatusChangedCallback")
+    fmt.printfln("    hConn: %v", data.hConn)
+    fmt.printfln("    eOldState: %v", data.eOldState)
+    fmt.printfln("    info: %v", steam_connectioninfo_to_string(&data.info))
+    
 }
 
 _onGetNumberOfCurrentPlayers :: proc(data: ^steam.NumberOfCurrentPlayers) {
@@ -156,4 +163,41 @@ steam_dbgmsg_to_string :: proc(msg: ^[256]u8) -> string {
     }
     
     return msg_str
+}
+
+cstring_to_string :: proc(bytes: []u8) -> string {
+    for i in 0..<len(bytes) {
+        if bytes[i] == 0 {
+            return string(bytes[0:i])
+        }
+    }
+    return string(bytes)
+}
+
+steam_connectioninfo_to_string :: proc(conn_info: ^steam.SteamNetConnectionInfo) -> string {
+    return fmt.tprintf(
+        "SteamNetConnectionInfo:\n" +
+        "  identityRemote: {}\n" +
+        "  nUserData: {}\n" +
+        "  hListenSocket: {}\n" +
+        "  addrRemote: {}\n" +
+        "  idPOPRemote: {}\n" +
+        "  idPOPRelay: {}\n" +
+        "  eState: {}\n" +
+        "  eEndReason: %v\n" +
+        "  szEndDebug: \"{}\"\n" +
+        "  szConnectionDescription: \"{}\"\n" +
+        "  nFlags: {}\n",
+        conn_info.identityRemote,
+        conn_info.nUserData,
+        conn_info.hListenSocket,
+        conn_info.addrRemote,
+        conn_info.idPOPRemote,
+        conn_info.idPOPRelay,
+        conn_info.eState,
+        conn_info.eEndReason,
+        cstring_to_string(conn_info.szEndDebug[:]),
+        cstring_to_string(conn_info.szConnectionDescription[:]),
+        conn_info.nFlags
+    )
 }

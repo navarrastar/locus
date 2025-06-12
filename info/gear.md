@@ -92,3 +92,9 @@ After every fight, this is what happens:
 - Each player is awarded a Chip.
 - The Chip Auction is held. (Shown 3 tft items)
 - The player is shown 
+
+**Match Start**
+- Each of the 8 players are shown the same 5 elements (there are 10 elements total), and they
+choose which one to start the match with.
+- Each element has an associated ring that is always given when the element is chosen, as well
+as a ring that is randomly assigned to it
