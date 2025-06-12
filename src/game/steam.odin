@@ -117,7 +117,7 @@ _onSteamRelayNetworkStatus :: proc(data: ^steam.SteamRelayNetworkStatus) {
     fmt.printfln("    bPingMeasurementInProgress = %v", data.bPingMeasurementInProgress)
     fmt.printfln("    eAvailNetworkConfig = %v", data.eAvailNetworkConfig)
     fmt.printfln("    eAvailAnyRelay = %v", data.eAvailAnyRelay)
-    fmt.printfln("    debugMsg = %s", steam_dbgmsg_to_string(&data.debugMsg))
+    fmt.printfln("    debugMsg = %s", steam_dbgmsg_to_string(&data.debugMsg[0], 256))
 }
 
 _onConnectionStatusChanged :: proc(data: ^steam.SteamNetConnectionStatusChangedCallback) {
@@ -147,10 +147,10 @@ _steam_handle_api_call_result :: proc(call: ^steam.SteamAPICallCompleted, temp_c
     
 }
 
-steam_dbgmsg_to_string :: proc(msg: ^[256]u8) -> string {
+steam_dbgmsg_to_string :: proc(msg: [^]u8, len: int) -> string {
     // Find the length of the message (up to the null terminator)
     msg_len := 0
-    for i := 0; i < len(msg); i += 1 {
+    for i := 0; i < len; i += 1 {
         if msg[i] == 0 {
             msg_len = i
             break
@@ -163,15 +163,6 @@ steam_dbgmsg_to_string :: proc(msg: ^[256]u8) -> string {
     }
     
     return msg_str
-}
-
-cstring_to_string :: proc(bytes: []u8) -> string {
-    for i in 0..<len(bytes) {
-        if bytes[i] == 0 {
-            return string(bytes[0:i])
-        }
-    }
-    return string(bytes)
 }
 
 steam_connectioninfo_to_string :: proc(conn_info: ^steam.SteamNetConnectionInfo) -> string {
@@ -196,8 +187,8 @@ steam_connectioninfo_to_string :: proc(conn_info: ^steam.SteamNetConnectionInfo)
         conn_info.idPOPRelay,
         conn_info.eState,
         conn_info.eEndReason,
-        cstring_to_string(conn_info.szEndDebug[:]),
-        cstring_to_string(conn_info.szConnectionDescription[:]),
+        steam_dbgmsg_to_string(&conn_info.szEndDebug[0], 128),
+        steam_dbgmsg_to_string(&conn_info.szConnectionDescription[0], 128),
         conn_info.nFlags
     )
 }

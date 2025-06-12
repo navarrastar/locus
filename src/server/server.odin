@@ -137,7 +137,8 @@ init :: proc() {
 		0,
 		nil,
 	)
-	log.infof("Steam SDR Listen Socket created on virtual port %v", 0)
+	serverID := steam.GameServer_GetSteamID(server_state.game_server)
+	log.infof("Steam SDR Listen Socket created:\n    serverID: %v\n    virtaulPort: %v", serverID, 0)
 
 	server_state.poll_group = steam.NetworkingSockets_CreatePollGroup(server_state.net_sockets)
 	log.assertf(

@@ -12,6 +12,7 @@ import steam "../../third_party/steamworks"
 import "../server"
 
 MAX_SERVER_INFOS :: 128
+APP_ID :: 3070970
 
 client_state: struct {
 	ticket:      steam.HAuthTicket,
@@ -101,7 +102,7 @@ client_update_serverlist :: proc() {
 
 	client_serverlist_state.request = steam.MatchmakingServers_RequestInternetServerList(
 		client_state.mm_servers,
-		3070970,
+		APP_ID,
 		nil,
 		0,
 		cast(^steam.IMatchmakingServerListResponse)response,
