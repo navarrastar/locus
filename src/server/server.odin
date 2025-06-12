@@ -228,6 +228,9 @@ _run_callbacks :: proc() {
 			_callback_NetAuthenticationStatus(
 				cast(^steam.SteamNetAuthenticationStatus)callback.pubParam,
 			)
+		
+		case .SteamRelayNetworkStatus:
+		    _callback_RelayNetworkStatus(cast(^steam.SteamRelayNetworkStatus)callback.pubParam)
 
 		case:
 			fmt.println("Unhandled Callback:", callback.iCallback)
@@ -335,6 +338,15 @@ _callback_NetAuthenticationStatus :: proc(data: ^steam.SteamNetAuthenticationSta
    	fmt.println("SteamNetAuthenticationStatus callback called with data:")
     fmt.printfln("    eAvail: %v", data.eAvail)
     fmt.printfln("    dbgMsg: %v", steam_dbgmsg_to_string(&data.debugMsg))
+}
+
+_callback_RelayNetworkStatus :: proc(data: ^steam.SteamRelayNetworkStatus) {
+  fmt.printfln("[STEAM] --- SteamRelayNetworkStatus")
+  fmt.printfln("    eAvail = %v", data.eAvail)
+  fmt.printfln("    bPingMeasurementInProgress = %v", data.bPingMeasurementInProgress)
+  fmt.printfln("    eAvailNetworkConfig = %v", data.eAvailNetworkConfig)
+  fmt.printfln("    eAvailAnyRelay = %v", data.eAvailAnyRelay)
+  fmt.printfln("    debugMsg = %s", steam_dbgmsg_to_string(&data.debugMsg))
 }
 
 _find_connection_by_steamID :: proc(steamID: steam.CSteamID) -> int {
