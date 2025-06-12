@@ -78,7 +78,6 @@ Config :: struct {
 server_state: struct {
 	config:        Config,
 	steamID:       steam.CSteamID,
-	net_utils:     ^steam.INetworkingUtils,
 	game_server:   ^steam.IGameServer,
 	net_sockets:   ^steam.INetworkingSockets,
 	listen_socket: steam.HSteamListenSocket,
@@ -115,7 +114,6 @@ init :: proc() {
 
 	server_state.game_server = steam.GameServer()
 	server_state.steamID = steam.GameServer_GetSteamID(server_state.game_server)
-	server_state.net_utils = steam.NetworkingUtils_SteamAPI()
 
 	steam.GameServer_SetModDir(server_state.game_server, "locus")
 	steam.GameServer_SetProduct(server_state.game_server, APP_ID_STR)
@@ -127,8 +125,6 @@ init :: proc() {
 	)
 	steam.GameServer_SetServerName(server_state.game_server, server_state.config.server_name)
 	steam.GameServer_LogOnAnonymous(server_state.game_server)
-
-	steam.NetworkingUtils_InitRelayNetworkAccess(server_state.net_utils)
 
 	steam.GameServer_SetAdvertiseServerActive(server_state.game_server, true)
 
