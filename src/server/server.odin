@@ -338,7 +338,9 @@ _callback_ValidateAuthTicketResponse :: proc(data: ^steam.ValidateAuthTicketResp
 }
 
 _callback_NetAuthenticationStatus :: proc(data: ^steam.SteamNetAuthenticationStatus) {
-   	fmt.printfln("SteamNetAuthenticationStatus callback called with data: %v", data)
+   	fmt.println("SteamNetAuthenticationStatus callback called with data:")
+    fmt.printfln("    eAvail: %v", data.eAvail)
+    fmt.printfln("    dbgMsg: %v", steam_dbgmsg_to_string(&data.debugMsg))
 }
 
 _find_connection_by_steamID :: proc(steamID: steam.CSteamID) -> int {
@@ -605,4 +607,22 @@ _ip6_string_to_bytes :: proc(s: string) -> (bytes: [16]u8, ok: bool) {
 	}
 
 	return bytes, true
+}
+
+steam_dbgmsg_to_string :: proc(msg: ^[256]u8) -> string {
+    // Find the length of the message (up to the null terminator)
+    msg_len := 0
+    for i := 0; i < len(msg); i += 1 {
+        if msg[i] == 0 {
+            msg_len = i
+            break
+        }
+    }
+    
+    msg_str, err := strings.clone_from_bytes(msg[:msg_len], context.temp_allocator)
+    if err != .None {
+        log.error("strings.clone_from_bytes failed with error:", err)
+    }
+    
+    return msg_str
 }
