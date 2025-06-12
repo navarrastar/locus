@@ -233,6 +233,9 @@ _run_callbacks :: proc() {
 		case .SteamRelayNetworkStatus:
 		    _callback_RelayNetworkStatus(cast(^steam.SteamRelayNetworkStatus)callback.pubParam)
 
+		case .SteamServersConnected:
+		    _callback_ServersConnected(cast(^steam.SteamServersConnected)callback.pubParam)
+						
 		case:
 			fmt.println("Unhandled Callback:", callback.iCallback)
 		}
@@ -348,6 +351,11 @@ _callback_RelayNetworkStatus :: proc(data: ^steam.SteamRelayNetworkStatus) {
   fmt.printfln("    eAvailNetworkConfig = %v", data.eAvailNetworkConfig)
   fmt.printfln("    eAvailAnyRelay = %v", data.eAvailAnyRelay)
   fmt.printfln("    debugMsg = %s", steam_dbgmsg_to_string(&data.debugMsg))
+}
+
+_callback_ServersConnected :: proc(data: ^steam.SteamServersConnected) {
+    fmt.printfln("[STEAM] --- SteamServersConnected")
+    fmt.printfln("    serverID = %v", steam.GameServer_GetSteamID(server_state.game_server))
 }
 
 _find_connection_by_steamID :: proc(steamID: steam.CSteamID) -> int {
