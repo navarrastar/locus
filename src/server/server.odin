@@ -18,6 +18,7 @@ import toml "../../third_party/toml_parser"
 CONFIG :: #load("config.toml")
 AUTH_TICKET_SIZE :: 1024 // in bytes
 STEAM_ID_SIZE :: 8 // in bytes
+APP_ID_STR :: "3070970"
 
 //SERVER_IP_STR :: "2600:3c00::f03c:95ff:fe44:bdfc"
 
@@ -67,7 +68,7 @@ Config :: struct {
 
 	// [Gameplay]
 	tick_rate:   u16,
-	server_name: string,
+	server_name: cstring,
 	max_players: u16,
 
 	// [Steam]
@@ -101,7 +102,6 @@ init :: proc() {
 
 	log.info("Starting SteamGameServer")
 
-	server_mode: steam.EServerMode
 	res := steam.SteamGameServer_InitEx(
 		0,
 		server_state.config.game_port,
@@ -118,15 +118,14 @@ init :: proc() {
 	server_state.net_utils = steam.NetworkingUtils_SteamAPI()
 
 	steam.GameServer_SetModDir(server_state.game_server, "locus")
-	steam.GameServer_SetProduct(server_state.game_server, "3070970")
+	steam.GameServer_SetProduct(server_state.game_server, APP_ID_STR)
 	steam.GameServer_SetGameDescription(server_state.game_server, "locus server description")
 	steam.GameServer_SetGameTags(server_state.game_server, "pvp,multiplayer")
 	steam.GameServer_SetMaxPlayerCount(
 		server_state.game_server,
 		i32(server_state.config.max_players),
 	)
-	steam.GameServer_SetServerName(server_state.game_server, "locus server")
-	steam.GameServer_SetDedicatedServer(server_state.game_server, true)
+	steam.GameServer_SetServerName(server_state.game_server, server_state.config.server_name)
 	steam.GameServer_LogOnAnonymous(server_state.game_server)
 
 	steam.NetworkingUtils_InitRelayNetworkAccess(server_state.net_utils)
@@ -524,7 +523,7 @@ _init_config :: proc() {
 	// [Gameplay]
 	game_server_name, ok_name := toml.get_string(table, "Gameplay", "server_name")
 	if !ok_name do panic("config.toml: Missing or invalid [Gameplay].server_name (string)")
-	server_state.config.server_name = strings.clone(game_server_name)
+	server_state.config.server_name = strings.clone_to_cstring(game_server_name)
 
 	tick_rate_i64, ok_tr := toml.get_i64(table, "Gameplay", "tick_rate")
 	if !ok_tr do panic("config.toml: Missing or invalid [Gameplay].server_name (string)")
@@ -546,7 +545,7 @@ _init_config :: proc() {
 	log.infof("  Network.query_port: %d", server_state.config.query_port)
 	log.infof("  Gameplay.server_name: %s", server_state.config.server_name)
 	log.infof("  Gameplay.max_players: %d", server_state.config.max_players)
-	log.infof("  Steam.server_mode: %v", server_state.config.server_mode)
+	log.infof("  Steam.server_mode: %v", steam.EServerMode(server_state.config.server_mode))
 }
 
 @(require_results)
