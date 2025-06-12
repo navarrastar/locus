@@ -62,7 +62,6 @@ ServerError :: enum {
 
 Config :: struct {
 	// [Network]
-	server_ip:   string,
 	game_port:   u16,
 	query_port:  u16,
 
@@ -201,22 +200,22 @@ _run_callbacks :: proc() {
 				allocator = context.temp_allocator,
 			)
 
-			failed: bool
-			steam.ManualDispatch_GetAPICallResult(
-				steam_pipe,
-				call_completed.hAsyncCall,
-				temp_call_res,
-				callback.cubParam,
-				callback.iCallback,
-				&failed,
-			)
-			if failed == true {
-				log.errorf(
-					"Failed to get steam api call result for callback: %s",
-					callback.iCallback,
-				)
-				return
-			}
+			// failed: bool
+			// steam.ManualDispatch_GetAPICallResult(
+			// 	steam_pipe,
+			// 	call_completed.hAsyncCall,
+			// 	temp_call_res,
+			// 	callback.cubParam,
+			// 	callback.iCallback,
+			// 	&failed,
+			// )
+			// if failed == true {
+			// 	log.errorf(
+			// 		"Failed to get steam api call result for callback: %s",
+			// 		callback.iCallback,
+			// 	)
+			// 	return
+			// }
 
 			_handle_api_call_result(call_completed, temp_call_res)
 
@@ -513,10 +512,6 @@ _init_config :: proc() {
 	defer toml.deep_delete(table)
 
 	// [Network]
-	net_server_ip, ok_ip := toml.get_string(table, "Network", "server_ip")
-	if !ok_ip do panic("config.toml: Missing or invalid [Network].server_ip (string)")
-	server_state.config.server_ip = strings.clone(net_server_ip)
-
 	net_game_port_i64, ok_sp := toml.get_i64(table, "Network", "game_port")
 	if !ok_sp do panic("config.toml: Missing or invalid [Network].game_port (integer)")
 	server_state.config.game_port = u16(net_game_port_i64)
@@ -547,12 +542,11 @@ _init_config :: proc() {
 	// [Steam]
 
 	log.info("Server configuration loaded:")
-	log.infof("  Network.server_ip: %s", server_state.config.server_ip)
 	log.infof("  Network.game_port: %d", server_state.config.game_port)
 	log.infof("  Network.query_port: %d", server_state.config.query_port)
 	log.infof("  Gameplay.server_name: %s", server_state.config.server_name)
 	log.infof("  Gameplay.max_players: %d", server_state.config.max_players)
-	log.infof("  Steam.server_mode: %t", server_state.config.server_mode)
+	log.infof("  Steam.server_mode: %v", server_state.config.server_mode)
 }
 
 @(require_results)

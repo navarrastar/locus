@@ -1,5 +1,4 @@
 [Network]
-server_ip = "2600:3c00::f03c:95ff:fe44:bdfc"
 game_port = 27015
 query_port = 27030
 
@@ -10,4 +9,4 @@ max_players = 8
 
 
 [Steam]
-server_mode = 1
+server_mode = 2

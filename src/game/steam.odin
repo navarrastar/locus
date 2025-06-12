@@ -177,17 +177,17 @@ cstring_to_string :: proc(bytes: []u8) -> string {
 steam_connectioninfo_to_string :: proc(conn_info: ^steam.SteamNetConnectionInfo) -> string {
     return fmt.tprintf(
         "SteamNetConnectionInfo:\n" +
-        "  identityRemote: {}\n" +
-        "  nUserData: {}\n" +
-        "  hListenSocket: {}\n" +
-        "  addrRemote: {}\n" +
-        "  idPOPRemote: {}\n" +
-        "  idPOPRelay: {}\n" +
-        "  eState: {}\n" +
-        "  eEndReason: %v\n" +
-        "  szEndDebug: \"{}\"\n" +
-        "  szConnectionDescription: \"{}\"\n" +
-        "  nFlags: {}\n",
+        "        identityRemote: {}\n" +
+        "        nUserData: {}\n" +
+        "        hListenSocket: {}\n" +
+        "        addrRemote: {}\n" +
+        "        idPOPRemote: {}\n" +
+        "        idPOPRelay: {}\n" +
+        "        eState: {}\n" +
+        "        eEndReason: %v\n" +
+        "        szEndDebug: \"{}\"\n" +
+        "        szConnectionDescription: \"{}\"\n" +
+        "        nFlags: {}\n",
         conn_info.identityRemote,
         conn_info.nUserData,
         conn_info.hListenSocket,
